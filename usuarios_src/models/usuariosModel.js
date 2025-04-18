@@ -3,18 +3,12 @@ const mysql = require("mysql2/promise");
 
 // Configurar la conexión a la base de datos
 const connection = mysql.createPool({
-    host: "localhost",
-    user: "root",
-    password: "", // Deja esto vacío si no tienes contraseña
-    database: "concesionario",
-    port: 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    authPlugins: {
-        mysql_native_password: () => () => Buffer.from('')
-    }
-});
+    host: 'localhost',
+    user: 'root', // 
+    password: 'base123456', // ← Que coincida con lo que configuraste
+    database: 'concesionario'
+  });
+  
 
 // Función para probar la conexión
 async function testConnection() {
