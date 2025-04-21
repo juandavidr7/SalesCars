@@ -32,7 +32,7 @@
         <section class="hero-section">
             <div class="hero-content">
                 <h1 class="hero-title">DESCUBRE LA<br>EXCELENCIA<br>AUTOMOTRIZ</h1>
-                <a href="#explore" class="hero-cta">
+                <a href="#explore" class="hero-cta" id="exploreBtn">
                     <span class="hexagon">
                         <i class="fas fa-chevron-right"></i>
                     </span>
@@ -59,6 +59,10 @@
                 <h2>ENCUENTRA TU VEHÍCULO IDEAL</h2>
                 <div class="search-filters">
                     <div class="filter-group">
+                        <input type="text" id="idFilter" placeholder="ID del vehículo">
+                    </div>
+                    
+                    <div class="filter-group">
                         <select id="marcaFilter">
                             <option value="">Marca</option>
                         </select>
@@ -84,6 +88,9 @@
                     <div class="filter-group">
                         <input type="number" id="maxPrice" placeholder="Precio máximo">
                     </div>
+                    <div class="filter-group">
+                        <input type="number" id="kilometraje" placeholder="Kilometraje">
+                    </div>
                     <button class="search-btn">BUSCAR</button>
                 </div>
             </div>
@@ -107,16 +114,17 @@
                 <p>Bienvenido de nuevo a Sale Cars</p>
             </div>
             <form id="loginForm" class="auth-form">
-                <div class="form-group">
-                    <input type="email" id="loginEmail" placeholder=" " required>
-                    <label for="loginEmail">Correo Electrónico</label>
-                    <div class="form-error" id="loginEmailError"></div>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="loginPassword" placeholder=" " required>
-                    <label for="loginPassword">Contraseña</label>
-                    <div class="form-error" id="loginPasswordError"></div>
-                </div>
+                <!-- Cambia esto en el modal de login -->
+<div class="form-group">
+    <input type="email" id="email" name="email" placeholder=" " required> <!-- Cambiado a 'email' -->
+    <label for="email">Correo Electrónico</label>
+    <div class="form-error" id="loginEmailError"></div>
+</div>
+<div class="form-group">
+    <input type="password" id="contrasena" name="contrasena" placeholder=" " required> <!-- Cambiado a 'contrasena' -->
+    <label for="contrasena">Contraseña</label>
+    <div class="form-error" id="loginPasswordError"></div>
+</div>
                 <button type="submit" class="auth-btn">Iniciar Sesión</button>
             </form>
             <div class="auth-separator">
@@ -210,7 +218,5 @@
     <script type="module" src="js/config.js"></script>
     <script type="module" src="js/vehicles.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script src="js/modal.js"></script>
-    <script src="js/scroll-effects.js"></script>
 </body>
 </html>

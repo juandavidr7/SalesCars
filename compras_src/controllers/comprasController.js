@@ -38,6 +38,16 @@ router.get("/user/:userId", async (req, res) => {
     }
 });
 
+// Obtener las compras de un usuario
+router.get("/all", async (req, res) => {
+    try {
+        const compras = await Compra.obtenerCompras();
+        res.status(200).json(compras);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener las compras", error: err });
+    }
+});
+
 // Obtener una compra por ID
 router.get("/:purchaseId", async (req, res) => {
     const { purchaseId } = req.params;
@@ -133,6 +143,15 @@ router.post("/visitas", async (req, res) => {
             return res.status(400).json({ message: err.message });
         }
         res.status(500).json({ message: "Error al registrar la visita", error: err });
+    }
+});
+
+router.get("/visitasver", async (req, res) => {
+    try {
+        const visitas = await Compra.obtenerVisitas();
+        res.status(200).json(visitas);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener las visitas", error: err });
     }
 });
 

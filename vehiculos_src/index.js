@@ -8,13 +8,8 @@ const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
 
-// Configuración mejorada de CORS
-app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8000'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
+// Permitir CORS desde cualquier origen en desarrollo
+app.use(cors());
 
 // Rutas
 app.use('/api', vehiculosRoutes);

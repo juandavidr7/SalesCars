@@ -149,44 +149,43 @@ async function handleLogin(e) {
     e.preventDefault();
     clearErrors();
 
-    const email = document.getElementById('loginEmail').value;
-    const contrasena = document.getElementById('loginPassword').value;
+    // Obtener valores de los campos de login
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('contrasena');
 
     try {
         console.log('Iniciando sesión...');
         const response = await fetch(`${API_URLS.usuarios}/usuarios/login`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email,
-                contraseña: contrasena
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailInput.value, contrasena: passwordInput.value })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // Guardar token y datos del usuario
+            // Guardar token y datos de usuario
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify({
-                name: data.name,
+                name: data.nombre,
                 role: data.role
             }));
-
-            // Redirigir según el rol
+            
+            // Redirigir automáticamente según el rol
             if (data.role === 'admin') {
-                window.location.href = '/views/admin-dashboard.html';
+                window.location.href = 'views/admin-dashboard.html';
             } else {
-                window.location.href = '/views/user-dashboard.html';
+                console.log("Dato importamte: ", data.role);
+                window.location.href = 'views/user-dashboard.html';
+                
+                
             }
         } else {
-            showError('loginError', data.message || 'Error al iniciar sesión');
+            showError('loginError', data.message || 'Credenciales incorrectas');
         }
     } catch (error) {
         console.error('Error en login:', error);
-        showError('loginError', 'Error al conectar con el servidor');
+        showError('loginError', 'Error de conexión');
     }
 }
 
@@ -212,7 +211,6 @@ async function handleRegister(e) {
                 email,
                 telefono,
                 contrasena,
-                rol: 'user'
             })
         });
 
@@ -241,10 +239,7 @@ function updateUIForLoggedUser(user) {
     
     userMenu.innerHTML = `
         <span>Bienvenido, ${user.name}</span>
-        ${user.role === 'admin' ? 
-            `<a href="/views/admin-dashboard.html" class="btn-auth">Panel Admin</a>` : 
-            ''
-        }
+        ${user.role === 'admin' ? `<a href="views/admin-dashboard.html" class="btn-auth">Panel Admin</a>` : ''}
         <button id="logoutBtn" class="btn-auth">Cerrar Sesión</button>
     `;
     

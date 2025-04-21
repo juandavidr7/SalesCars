@@ -5,7 +5,7 @@ const Usuario = require("../models/usuariosModel");  // Solo importa la clase Us
 
 // Registrar un usuario
 router.post("/api/usuarios/register", async (req, res) => {
-    const { email, nombre, telefono, contraseña } = req.body;
+    const { email, nombre, telefono, contrasena, } = req.body;
 
     try {
         // Verificar si el email ya existe
@@ -15,45 +15,51 @@ router.post("/api/usuarios/register", async (req, res) => {
         }
 
         // Registrar usuario sin encriptar la contraseña
-        const result = await Usuario.registrarUsuario(email, nombre, telefono, contraseña);
+        const result = await Usuario.registrarUsuario(email, nombre, telefono, contrasena);
         res.status(201).json({ message: "Usuario registrado exitosamente" });
     } catch (err) {
         res.status(500).json({ message: "Error al registrar usuario", error: err });
     }
 });
 
-// Ruta de login simplificada
+// Ruta de login
 router.post('/api/usuarios/login', async (req, res) => {
-    const { email, contraseña } = req.body;
-    console.log('Intento de login con:', { email, contraseña });
+    const { email, contrasena } = req.body;
 
-    // Validar credenciales de administrador
-    if (email === 'admin@example.com' && contraseña === '123') {
-        return res.status(200).json({
-            message: "Login exitoso",
-            token: "token_admin",
-            name: "Administrador",
-            email: "admin@example.com",
-            role: "admin",
-            redirect: "/admin"
-        });
+    if (!email || !contrasena) {
+        return res.status(400).json({ message: "Faltan datos" });
     }
 
-    // Validar credenciales de usuario normal
-    if (email === 'user@example.com' && contraseña === '123') {
+    try {
+        // Verificar las credenciales usando el método de la clase Usuario
+        const usuario = await Usuario.obtenerUsuarioPorEmail(email);
+
+        if (!usuario) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        // Imprimir las contraseñas para depuración
+        console.log(`Contraseña ingresada: '${contrasena}'`);
+        console.log(`Contraseña almacenada en la base de datos: '${usuario.contrasena}'`);
+
+        // Comparar las contraseñas (en texto plano)
+        if (usuario.contrasena.trim() !== contrasena.trim()) {
+            return res.status(401).json({ message: "Contraseña incorrecta" });
+        }
+
         return res.status(200).json({
             message: "Login exitoso",
-            token: "token_user",
-            name: "Usuario Normal",
-            email: "user@example.com",
-            role: "user",
-            redirect: "/perfil"
+            nombre: usuario.nombre,            
+            role: usuario.rol || 'user',
+            redirect: usuario.rol === 'admin' ? '/admin' : '/perfil'
         });
+        
+    } catch (err) {
+        console.log('Error en la base de datos:', err);
+        return res.status(500).json({ message: "Error en la base de datos", error: err });
     }
-
-    // Para cualquier otro usuario, devolver error
-    return res.status(401).json({ message: "Credenciales incorrectas" });
 });
+
 
 // Obtener información del usuario
 router.get("/api/usuarios/:id", async (req, res) => {
@@ -72,11 +78,11 @@ router.get("/api/usuarios/:id", async (req, res) => {
 // Ruta PUT para actualizar un usuario
 router.put("/api/usuarios/:id", async (req, res) => {
     const { id } = req.params;
-    const { email, nombre, telefono, contraseña } = req.body;
+    const { email, nombre, telefono, contrasena } = req.body;
 
     try {
         // Llamamos al método actualizarUsuario del modelo
-        const result = await Usuario.actualizarUsuario(id, email, nombre, telefono, contraseña);
+        const result = await Usuario.actualizarUsuario(id, email, nombre, telefono, contrasena);
 
         if (result.affectedRows > 0) {
             res.status(200).json({ message: "Datos actualizados exitosamente" });
@@ -117,9 +123,9 @@ router.post("/api/usuarios/logout", (req, res) => {
 
 // Cambiar contraseña
 router.put("/api/usuarios/password-change", async (req, res) => {
-    const { id, nuevaContraseña } = req.body;
+    const { id, nuevaContrasena } = req.body;
     try {
-        const hashedPassword = await bcrypt.hash(nuevaContraseña, 10);
+        const hashedPassword = await bcrypt.hash(nuevaContrasena, 10);
         const result = await Usuario.actualizarUsuario(id, null, null, null, hashedPassword);
         if (result.affectedRows > 0) {
             res.status(200).json({ message: "Contraseña cambiada exitosamente" });
@@ -130,7 +136,6 @@ router.put("/api/usuarios/password-change", async (req, res) => {
         res.status(500).json({ message: "Error al cambiar contraseña", error: err });
     }
 });
-
 // Obtener todos los usuarios
 router.get("/api/usuarios", async (req, res) => {
     try {
@@ -142,5 +147,6 @@ router.get("/api/usuarios", async (req, res) => {
         res.status(500).json({ message: "Error al obtener los usuarios", error: err });
     }
 });
+
 
 module.exports = router;

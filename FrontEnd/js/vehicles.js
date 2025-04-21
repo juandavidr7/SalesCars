@@ -5,16 +5,21 @@ class VehiclesAPI {
         this.baseUrl = API_URLS.vehiculos;
     }
 
-    // Obtener todos los vehículos
     async getAllVehicles() {
         try {
             const response = await fetch(`${this.baseUrl}/vehiculos`);
-            if (!response.ok) {
-                throw new Error('Error al obtener los vehículos');
+            // URL base directa
+            if (!response.ok) throw new Error('Error en la API');
+            const data = await response.json();
+            
+            // Validar estructura de respuesta
+            if (!data.success || !Array.isArray(data.data)) {
+                throw new Error('Formato de respuesta inválido');
             }
-            return await response.json();
+            
+            return data;
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error en getAllVehicles:', error);
             throw error;
         }
     }
@@ -55,7 +60,7 @@ class VehiclesAPI {
 
     // Obtener todas las marcas
     async getBrands() {
-        try {
+        try { 
             const response = await fetch(`${this.baseUrl}/vehiculos/marcas`);
             if (!response.ok) {
                 throw new Error('Error al obtener las marcas');
@@ -84,10 +89,9 @@ class VehiclesAPI {
     // Obtener vehículos destacados (primeros 3)
     async getFeaturedVehicles() {
         try {
+            // Conserva el límite de 3 para destacados
             const response = await fetch(`${this.baseUrl}/vehiculos?limit=3`);
-            if (!response.ok) {
-                throw new Error('Error al obtener los vehículos');
-            }
+            if (!response.ok) throw new Error('Error al obtener destacados');
             return await response.json();
         } catch (error) {
             console.error('Error:', error);
@@ -138,6 +142,21 @@ class VehiclesUI {
         if (searchBtn) {
             searchBtn.addEventListener('click', () => this.handleSearch());
         }
+
+        
+            const exploreBtn = document.getElementById('exploreBtn');
+            console.log('¿Se encontró el botón explorar?', exploreBtn); // Log 1
+        
+            if (exploreBtn) {
+                exploreBtn.addEventListener('click', e => {
+                    e.preventDefault();
+                    console.log('Botón explorar clickeado'); // Log 2
+                    this.handleExplore();
+                });
+            } else {
+                console.warn('El botón explorar NO se encontró'); // Log 3
+            }
+    
     }
 
     // Cargar marcas en el select
@@ -233,25 +252,41 @@ class VehiclesUI {
 
     // Manejar búsqueda
     async handleSearch() {
+        const id = document.getElementById('idFilter').value.trim();
+    
+        if (id) {
+            try {
+                const response = await this.api.getVehicleById(id);
+                if (response.success) {
+                    this.displayResults([response.data]); // Mostrar solo ese
+                    document.getElementById('resultados').scrollIntoView({ behavior: 'smooth' });
+                }
+            } catch (error) {
+                console.error('Error al buscar por ID:', error);
+                alert('No se encontró un vehículo con ese ID.');
+            }
+            return; // Evita seguir al buscar por otros filtros
+        }
+    
+        // Si no hay ID, buscar por filtros
         const filters = {
             marca: document.getElementById('marcaFilter').value,
             modelo: document.getElementById('modeloFilter').value,
             año: document.getElementById('yearFilter').value,
             precio_min: document.getElementById('minPrice').value,
-            precio_max: document.getElementById('maxPrice').value
+            precio_max: document.getElementById('maxPrice').value,
+            kilometraje: document.getElementById('kilometraje').value
         };
-
-        // Validar que al menos haya un filtro seleccionado
-        if (!filters.marca && !filters.modelo && !filters.año && !filters.precio_min && !filters.precio_max) {
+    
+        if (!filters.marca && !filters.modelo && !filters.año && !filters.precio_min && !filters.precio_max && !filters.kilometraje) {
             alert('Por favor, selecciona al menos un criterio de búsqueda');
             return;
         }
-
+    
         try {
             const response = await this.api.searchVehicles(filters);
             if (response.success) {
                 this.displayResults(response.data);
-                // Desplazar la página a la sección de resultados
                 document.getElementById('resultados').scrollIntoView({ behavior: 'smooth' });
             }
         } catch (error) {
@@ -259,52 +294,58 @@ class VehiclesUI {
             alert('Error al realizar la búsqueda. Por favor, intenta nuevamente.');
         }
     }
+    
 
-    // Mostrar resultados
-    displayResults(vehicles) {
+    displayResults(vehiclesData) {
         const resultsContainer = document.querySelector('#resultados .models-grid');
-        if (resultsContainer) {
-            resultsContainer.innerHTML = '';
-            
-            if (vehicles.length === 0) {
-                resultsContainer.innerHTML = '<p class="no-results">No se encontraron vehículos que coincidan con los criterios de búsqueda.</p>';
-                return;
-            }
-            
-            vehicles.forEach(vehicle => {
-                const vehicleCard = this.createVehicleCard(vehicle);
-                resultsContainer.appendChild(vehicleCard);
-            });
+        
+        if (!resultsContainer) return;
+    
+        resultsContainer.innerHTML = '';
+        
+        if (!vehiclesData || vehiclesData.length === 0) {
+            resultsContainer.innerHTML = `
+                <p class="no-results">
+                    <i class="fas fa-car-crash"></i>
+                    No se encontraron vehículos
+                </p>
+            `;
+            return;
         }
+        
+        // Después (correcto)
+    vehiclesData.forEach(vehicle => {
+    resultsContainer.insertAdjacentHTML('beforeend', this.createVehicleCard(vehicle));
+  });
+  
     }
 
     // Crear tarjeta de vehículo
     createVehicleCard(vehicle) {
-        const card = document.createElement('div');
-        card.className = 'vehicle-card';
+        // Convertir a números
+        const precio = Number(vehicle.precio);
+        const kilometraje = Number(vehicle.kilometraje);
         
-        card.innerHTML = `
-            <div class="vehicle-image">
-                <img src="assets/vehicles/${vehicle.marca.toLowerCase()}_${vehicle.modelo.toLowerCase()}.jpg" 
-                     alt="${vehicle.marca} ${vehicle.modelo}"
-                     onerror="this.src='assets/vehicles/default.jpg'">
-            </div>
-            <div class="vehicle-info">
-                <h3>${vehicle.marca} ${vehicle.modelo}</h3>
-                <p>Año: ${vehicle.año}</p>
-                <p>Precio: $${vehicle.precio.toLocaleString()}</p>
-                <p>Kilometraje: ${vehicle.kilometraje.toLocaleString()} km</p>
-                <button class="view-details" data-id="${vehicle.id}">Ver Detalles</button>
+        return `
+            <div class="vehicle-card">
+                <div class="vehicle-image">
+                    <img src="assets/vehicles/${vehicle.marca.toLowerCase()}_${vehicle.modelo.toLowerCase()}.jpg" 
+                         alt="${vehicle.marca} ${vehicle.modelo}">
+                </div>
+                <div class="vehicle-info">
+                    <h3>${vehicle.marca} ${vehicle.modelo}</h3>
+                    <p>Año: ${vehicle.año}</p>
+                    <p>Precio: $${precio.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                    <p>Kilometraje: ${kilometraje.toLocaleString('es-MX')} km</p>
+                    <div class="vehicle-status ${vehicle.estado}">
+                        ${vehicle.estado.toUpperCase()}
+                    </div>
+                    <button class="view-details" data-id="${vehicle.id}">
+                        <i class="fas fa-search"></i> Detalles
+                    </button>
+                </div>
             </div>
         `;
-
-        // Agregar evento para ver detalles
-        const viewDetailsBtn = card.querySelector('.view-details');
-        if (viewDetailsBtn) {
-            viewDetailsBtn.addEventListener('click', () => this.showVehicleDetails(vehicle.id));
-        }
-
-        return card;
     }
 
     // Mostrar detalles del vehículo
@@ -343,14 +384,36 @@ class VehiclesUI {
             const limitedVehicles = vehicles.slice(0, 3);
             
             limitedVehicles.forEach(vehicle => {
-                const vehicleCard = this.createVehicleCard(vehicle);
-                featuredContainer.appendChild(vehicleCard);
-            });
+                featuredContainer.insertAdjacentHTML('beforeend', this.createVehicleCard(vehicle));
+              });
+        }
+    }
+
+    async handleExplore() {
+        console.log('Explorar fue clickeado');
+        try {
+            // Obtener TODOS los vehículos (sin límite)
+            const response = await this.api.getAllVehicles();
+            
+            if (response.success) {
+                // Mostrar todos los resultados
+                this.displayResults(response.data);
+                
+                // Scroll a resultados (sin afectar destacados)
+                document.getElementById('resultados').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.displayResults([]);
         }
     }
 }
 
 // Inicializar la interfaz cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 Se hizo clic en Explorar");
     new VehiclesUI();
 }); 

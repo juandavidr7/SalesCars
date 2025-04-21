@@ -1,159 +1,5 @@
-import { API_URL } from './config.js';
-
-// Verificación de autenticación
-const checkAuth = () => {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-
-    if (!token || !user) {
-        window.location.href = '/index.html';
-    }
-};
-
-// Gestión de Usuario
-class UserManager {
-    static async updateProfile(userData) {
-        try {
-            const response = await fetch(`${API_URL}/usuarios/${userData.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(userData)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al actualizar perfil:', error);
-            throw error;
-        }
-    }
-
-    static async deleteAccount(userId) {
-        try {
-            const response = await fetch(`${API_URL}/usuarios/${userId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al eliminar cuenta:', error);
-            throw error;
-        }
-    }
-
-    static async changePassword(userId, currentPassword, newPassword) {
-        try {
-            const response = await fetch(`${API_URL}/usuarios/password-change`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    id: userId,
-                    currentPassword,
-                    newPassword
-                })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al cambiar contraseña:', error);
-            throw error;
-        }
-    }
-}
-
-// Gestión de Vehículos
-class VehicleManager {
-    static async createVehicle(vehicleData) {
-        try {
-            const response = await fetch(`${API_URL}/vehiculos`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(vehicleData)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al crear vehículo:', error);
-            throw error;
-        }
-    }
-
-    static async updateVehicle(id, vehicleData) {
-        try {
-            const response = await fetch(`${API_URL}/vehiculos/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(vehicleData)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al actualizar vehículo:', error);
-            throw error;
-        }
-    }
-
-    static async deleteVehicle(id) {
-        try {
-            const response = await fetch(`${API_URL}/vehiculos/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al eliminar vehículo:', error);
-            throw error;
-        }
-    }
-
-    static async markAsSold(id) {
-        try {
-            const response = await fetch(`${API_URL}/vehiculos/${id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ estado: 'vendido' })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al marcar vehículo como vendido:', error);
-            throw error;
-        }
-    }
-}
-
-// Gestión de Visitas
-class VisitManager {
-    static async createVisit(visitData) {
-        try {
-            const response = await fetch(`${API_URL}/visitas`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(visitData)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Error al crear visita:', error);
-            throw error;
-        }
-    }
-}
+import { UserManager, VehicleManager, VisitManager, checkAuth } from './api-dashboard.js';
+import { API_URLS } from './config.js';
 
 // Manejadores de eventos UI
 document.addEventListener('DOMContentLoaded', () => {
@@ -161,9 +7,20 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     loadUserData();
     loadUserVehicles();
+    loadUserVisits();
+    loadUserPurchases();
 });
 
 function setupEventListeners() {
+    // Navegación
+    document.querySelectorAll('.sidebar ul li a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sectionId = this.getAttribute('href').substring(1);
+            showSection(sectionId);
+        });
+    });
+
     // Cerrar sesión
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -187,13 +44,33 @@ function setupEventListeners() {
     if (vehicleForm) {
         vehicleForm.addEventListener('submit', handleVehicleCreate);
     }
+
+    // Formulario de recuperación de contraseña
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', handleForgotPassword);
+    }
+
+    // Formulario de registrar visita
+    const visitForm = document.getElementById('visitForm');
+    if (visitForm) {
+        visitForm.addEventListener('submit', handleVisitCreate);
+    }
 }
 
 // Funciones de manejo de eventos
 async function handleLogout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/index.html';
+    try {
+        await UserManager.logoutServer(); // Cerrar sesión en el servidor
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/index.html';
+    } catch (error) {
+        // Si hay error en el servidor igual cerrar sesión localmente
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/index.html';
+    }
 }
 
 async function handleDeleteAccount() {
@@ -221,40 +98,115 @@ async function handleProfileUpdate(e) {
             telefono: form.profilePhone.value
         };
 
+        // Si hay nueva contraseña, cambiamos la contraseña
         if (form.newPassword.value) {
-            await UserManager.changePassword(
+            if (!form.currentPassword.value) {
+                showNotification('Debe ingresar su contraseña actual', 'error');
+                return;
+            }
+            
+            const passwordResult = await UserManager.changePassword(
                 user.id,
                 form.currentPassword.value,
                 form.newPassword.value
             );
+            
+            if (passwordResult.error) {
+                showNotification(passwordResult.message || 'Error al cambiar contraseña', 'error');
+                return;
+            }
+            
+            showNotification('Contraseña actualizada exitosamente');
+            form.currentPassword.value = '';
+            form.newPassword.value = '';
         }
 
-        await UserManager.updateProfile(userData);
+        const profileResult = await UserManager.updateProfile(userData);
+        
+        if (profileResult.error) {
+            showNotification(profileResult.message || 'Error al actualizar perfil', 'error');
+            return;
+        }
+        
+        // Actualizar datos de usuario en localStorage
+        const updatedUser = {...user, ...userData};
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
         showNotification('Perfil actualizado exitosamente');
     } catch (error) {
         showNotification('Error al actualizar perfil', 'error');
     }
 }
 
+async function handleForgotPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById('recoveryEmail').value;
+    
+    try {
+        const result = await UserManager.recoverPassword(email);
+        if (result.error) {
+            showNotification(result.message || 'Error al recuperar contraseña', 'error');
+        } else {
+            showNotification('Revise su correo para instrucciones de recuperación');
+            hideModal('forgotPasswordModal');
+        }
+    } catch (error) {
+        showNotification('Error al procesar la solicitud', 'error');
+    }
+}
+
 async function handleVehicleCreate(e) {
     e.preventDefault();
     const form = e.target;
+    const vehicleId = form.dataset.vehicleId;
 
     try {
         const vehicleData = {
             marca: form.marca.value,
             modelo: form.modelo.value,
-            año: form.año.value,
-            precio: form.precio.value,
-            kilometraje: form.kilometraje.value
+            año: parseInt(form.año.value),
+            precio: parseInt(form.precio.value),
+            kilometraje: parseInt(form.kilometraje.value)
         };
 
-        await VehicleManager.createVehicle(vehicleData);
+        let result;
+        if (vehicleId) {
+            // Actualizar vehículo existente
+            result = await VehicleManager.updateVehicle(vehicleId, vehicleData);
+            showNotification('Vehículo actualizado exitosamente');
+        } else {
+            // Crear nuevo vehículo
+            result = await VehicleManager.createVehicle(vehicleData);
+            showNotification('Vehículo registrado exitosamente');
+        }
+
         form.reset();
-        showNotification('Vehículo registrado exitosamente');
+        delete form.dataset.vehicleId;
         loadUserVehicles();
+        showSection('mis-vehiculos');
     } catch (error) {
-        showNotification('Error al registrar vehículo', 'error');
+        showNotification('Error al procesar el vehículo', 'error');
+    }
+}
+
+async function handleVisitCreate(e) {
+    e.preventDefault();
+    const form = e.target;
+
+    try {
+        const visitData = {
+            userId: JSON.parse(localStorage.getItem('user')).id,
+            vehicleId: parseInt(form.vehicleId.value),
+            date: form.visitDate.value,
+            status: 'pendiente'
+        };
+
+        await VisitManager.createVisit(visitData);
+        form.reset();
+        showNotification('Visita registrada exitosamente');
+        loadUserVisits();
+    } catch (error) {
+        showNotification('Error al registrar visita', 'error');
     }
 }
 
@@ -264,9 +216,9 @@ async function loadUserData() {
         const user = JSON.parse(localStorage.getItem('user'));
         const profileForm = document.getElementById('profileForm');
         if (profileForm) {
-            profileForm.profileName.value = user.name;
-            profileForm.profileEmail.value = user.email;
-            profileForm.profilePhone.value = user.phone;
+            profileForm.profileName.value = user.nombre || '';
+            profileForm.profileEmail.value = user.email || '';
+            profileForm.profilePhone.value = user.telefono || '';
         }
     } catch (error) {
         console.error('Error al cargar datos del usuario:', error);
@@ -275,8 +227,7 @@ async function loadUserData() {
 
 async function loadUserVehicles() {
     try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch(`${API_URL}/vehiculos?usuario=${user.id}`, {
+        const response = await fetch(`${API_URLS.vehiculos}/vehiculos/user`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -288,13 +239,42 @@ async function loadUserVehicles() {
     }
 }
 
+async function loadUserVisits() {
+    try {
+        const visits = await VisitManager.getUserVisits();
+        updateVisitsList(visits);
+    } catch (error) {
+        console.error('Error al cargar visitas:', error);
+    }
+}
+
+async function loadUserPurchases() {
+    try {
+        const response = await fetch(`${API_URLS.compras}/compras/user`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        const purchases = await response.json();
+        updatePurchasesList(purchases);
+    } catch (error) {
+        console.error('Error al cargar compras:', error);
+    }
+}
+
+// Funciones de actualización de UI
 function updateVehiclesList(vehicles) {
     const container = document.getElementById('myVehiclesContainer');
-    if (!container) return;
+    if (!container || !vehicles || !Array.isArray(vehicles)) return;
+
+    if (vehicles.length === 0) {
+        container.innerHTML = '<p>No tienes vehículos registrados.</p>';
+        return;
+    }
 
     container.innerHTML = vehicles.map(vehicle => `
         <div class="vehicle-card">
-            <img src="${vehicle.imagen || 'default-car.jpg'}" alt="${vehicle.marca} ${vehicle.modelo}">
+            <img src="${vehicle.imagen || '../img/default-car.jpg'}" alt="${vehicle.marca} ${vehicle.modelo}">
             <h3>${vehicle.marca} ${vehicle.modelo}</h3>
             <p>Año: ${vehicle.año}</p>
             <p>Precio: $${vehicle.precio}</p>
@@ -302,15 +282,93 @@ function updateVehiclesList(vehicles) {
             <div class="vehicle-actions">
                 <button class="btn btn-primary" onclick="editVehicle(${vehicle.id})">Editar</button>
                 <button class="btn btn-danger" onclick="deleteVehicle(${vehicle.id})">Eliminar</button>
-                ${vehicle.estado !== 'vendido' ? 
-                    `<button class="btn btn-success" onclick="markAsSold(${vehicle.id})">Marcar como vendido</button>` : 
-                    ''}
+                ${vehicle.vendido ? 
+                    '<span class="status-sold">Vendido</span>' : 
+                    `<button class="btn btn-success" onclick="markAsSold(${vehicle.id})">Marcar como vendido</button>`}
             </div>
         </div>
     `).join('');
 }
 
+function updateVisitsList(visits) {
+    const container = document.getElementById('myVisitsContainer');
+    if (!container || !visits || !Array.isArray(visits)) return;
+
+    if (visits.length === 0) {
+        container.innerHTML = '<p>No tienes visitas programadas.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Vehículo</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${visits.map(visit => `
+                    <tr>
+                        <td>${visit.vehicleBrand} ${visit.vehicleModel}</td>
+                        <td>${formatDate(visit.date)}</td>
+                        <td>${formatStatus(visit.status)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function updatePurchasesList(purchases) {
+    const container = document.getElementById('myPurchasesContainer');
+    if (!container || !purchases || !Array.isArray(purchases)) return;
+
+    if (purchases.length === 0) {
+        container.innerHTML = '<p>No tienes compras registradas.</p>';
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Vehículo</th>
+                    <th>Fecha</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${purchases.map(purchase => `
+                    <tr>
+                        <td>${purchase.vehicleBrand} ${purchase.vehicleModel}</td>
+                        <td>${formatDate(purchase.fecha)}</td>
+                        <td>$${purchase.precio_total}</td>
+                        <td>${formatStatus(purchase.estado)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
 // Funciones auxiliares
+function showSection(sectionId) {
+    document.querySelectorAll('.dashboard-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    document.getElementById(sectionId).classList.remove('hidden');
+    
+    document.querySelectorAll('.sidebar ul li').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    document.querySelector(`.sidebar ul li a[href="#${sectionId}"]`).parentElement.classList.add('active');
+}
+
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -322,10 +380,42 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+}
+
+function formatStatus(status) {
+    const statusMap = {
+        'pendiente': '<span class="status-pending">Pendiente</span>',
+        'confirmada': '<span class="status-confirmed">Confirmada</span>',
+        'cancelada': '<span class="status-cancelled">Cancelada</span>',
+        'completada': '<span class="status-completed">Completada</span>'
+    };
+    
+    return statusMap[status.toLowerCase()] || status;
+}
+
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+    }
+}
+
 // Funciones globales para los botones de vehículos
 window.editVehicle = async (id) => {
     try {
-        const response = await fetch(`${API_URL}/vehiculos/${id}`, {
+        const response = await fetch(`${API_URLS.vehiculos}/vehiculos/${id}`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -334,6 +424,7 @@ window.editVehicle = async (id) => {
         
         // Llenar formulario de edición
         const form = document.getElementById('vehicleForm');
+        form.dataset.vehicleId = vehicle.id;
         form.marca.value = vehicle.marca;
         form.modelo.value = vehicle.modelo;
         form.año.value = vehicle.año;
@@ -341,8 +432,7 @@ window.editVehicle = async (id) => {
         form.kilometraje.value = vehicle.kilometraje;
         
         // Cambiar a sección de edición
-        document.querySelector('#registrar-vehiculo').classList.remove('hidden');
-        document.querySelector('#mis-vehiculos').classList.add('hidden');
+        showSection('registrar-vehiculo');
     } catch (error) {
         showNotification('Error al cargar vehículo', 'error');
     }
@@ -368,4 +458,9 @@ window.markAsSold = async (id) => {
     } catch (error) {
         showNotification('Error al marcar vehículo como vendido', 'error');
     }
+};
+
+// Mostar modal de recuperación de contraseña
+window.showForgotPasswordModal = () => {
+    showModal('forgotPasswordModal');
 };

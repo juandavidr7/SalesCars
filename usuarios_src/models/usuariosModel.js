@@ -1,77 +1,87 @@
-// usuariosModel.js
 const mysql = require("mysql2/promise");
 
-// Configurar la conexión a la base de datos
+// Configuración mejorada de conexión
 const connection = mysql.createPool({
     host: "localhost",
     user: "root",
-    password: "", // Deja esto vacío si no tienes contraseña
-    database: "concesionario",
+    password: "base123456",
+    database: "usuariosbd",
     port: 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    authPlugins: {
-        mysql_native_password: () => () => Buffer.from('')
-    }
+    charset: 'utf8mb4' // Añadido para soportar caracteres especiales
 });
 
-// Función para probar la conexión
+// Función mejorada para probar conexión
 async function testConnection() {
     try {
-        console.log('🔍 Intentando conectar a MariaDB...');
         const conn = await connection.getConnection();
         console.log('✅ Conexión exitosa a MariaDB');
         
-        // Probar una consulta simple
-        const [rows] = await conn.query('SELECT 1 as test');
-        console.log('✅ Consulta de prueba exitosa:', rows);
-        
-        // Verificar la base de datos
-        const [dbs] = await conn.query('SHOW DATABASES');
-        console.log('📊 Bases de datos disponibles:', dbs.map(db => db.Database));
-        
-        // Verificar la tabla usuarios
-        const [tables] = await conn.query('SHOW TABLES FROM concesionario');
-        console.log('📋 Tablas en concesionario:', tables);
+        // Verificar estructura de la tabla usuarios
+        const [columns] = await conn.query('DESCRIBE usuarios');
+        console.log('🔍 Estructura de la tabla usuarios:', columns);
         
         conn.release();
     } catch (error) {
-        console.error('❌ Error de conexión:', error);
+        console.error('❌ Error crítico de conexión:', error);
+        process.exit(1); // Salir si no hay conexión
     }
 }
 
-// Ejecutar la prueba de conexión
 testConnection();
 
-// Definir la clase Usuario
 class Usuario {
-    constructor(id, email, nombre, telefono, contraseña) {
+    constructor(id, email, nombre, telefono, contrasena) {
         this.id = id;
         this.email = email;
         this.nombre = nombre;
         this.telefono = telefono;
-        this.contraseña = contraseña;
+        this.contrasena = contrasena;
     }
 
-    // Método para guardar usuario en la base de datos
-    static async registrarUsuario(email, nombre, telefono, contraseña) {
-        const [result] = await connection.execute(
-            'INSERT INTO usuarios (email, nombre, telefono, contraseña) VALUES (?, ?, ?, ?)',
-            [email, nombre, telefono, contraseña]  // Sin encriptar la contraseña
-        );
-        return result;
+    // Método mejorado para registrar usuario
+    static async registrarUsuario(email, nombre, telefono, contrasena) {
+        try {
+            // Validación básica
+            if (!email || !contrasena) throw new Error('Email y contraseña son requeridos');
+            
+            const [result] = await connection.execute(
+                'INSERT INTO usuarios (email, nombre, telefono, contrasena) VALUES (?, ?, ?, ?)',
+                [email.trim(), nombre?.trim(), telefono?.trim(), contrasena.trim()]
+            );
+            return result;
+        } catch (error) {
+            console.error('Error en registrarUsuario:', error);
+            throw error;
+        }
     }
 
-    // Método para obtener un usuario por email
+    // Método mejorado para obtener usuario por email
     static async obtenerUsuarioPorEmail(email) {
         try {
-            console.log('Buscando usuario con email:', email);
-            const [rows] = await connection.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
-            console.log('Resultado de la búsqueda:', rows);
+            if (!email) throw new Error('Email es requerido');
+            
+            const [rows] = await connection.execute(
+                'SELECT id, email, nombre, telefono, contrasena, rol FROM usuarios WHERE email = ? LIMIT 1', 
+                [email.trim()]
+            );
+            
+            if (!rows.length) {
+                console.log('⚠️ Usuario no encontrado para email:', email);
+                return null;
+            }
+            
+            console.log('Usuario encontrado:', {
+                id: rows[0].id,
+                email: rows[0].email,
+                contrasenaLength: rows[0].contrasena?.length
+            });
+            
             return rows[0];
         } catch (error) {
-            console.error('Error al buscar usuario por email:', error);
+            console.error('Error crítico en obtenerUsuarioPorEmail:', {
+                error: error.message,
+                email
+            });
             throw error;
         }
     }
@@ -102,7 +112,9 @@ static async actualizarUsuario(id, email, nombre, telefono, contraseña) {
     const [rows] = await connection.execute('SELECT * FROM usuarios');
     return rows;  // Retorna todos los usuarios
 }
+
+
+    
 }
 
-// Exportar la clase Usuario correctamente
 module.exports = Usuario;

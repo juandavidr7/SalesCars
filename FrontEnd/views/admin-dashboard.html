@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administrativo - Sale Cars</title>
     <link rel="stylesheet" href="../css/admin-dashboard.css">
+    <script src="../js/config.js" type="module"></script>
+    <script src="../js/admin-dashboard.js" type="module"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -39,7 +41,7 @@
         <section id="users-section" class="section">
             <div class="section-header">
                 <h2>Gestión de Usuarios</h2>
-                <button class="btn btn-primary" onclick="showModal('userModal')">
+                <button class="btn btn-primary" data-modal="userModal">
                     <i class="fas fa-plus"></i> Nuevo Usuario
                 </button>
             </div>
@@ -65,6 +67,7 @@
             <table id="vehiclesTable">
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Marca</th>
                         <th>Modelo</th>
                         <th>Año</th>
@@ -80,17 +83,19 @@
         <section id="purchases-section" class="section" style="display: none;">
             <div class="section-header">
                 <h2>Gestión de Compras</h2>
-                <button class="btn btn-primary" onclick="showModal('purchaseModal')">
+                <button class="btn btn-primary" data-modal="purchaseModal">
                     <i class="fas fa-plus"></i> Nueva Compra
                 </button>
             </div>
             <table id="purchasesTable">
                 <thead>
                     <tr>
-                        <th>Usuario</th>
-                        <th>Vehículo</th>
+                        <th>Usuario ID</th>
+                        <th>Vehículo ID</th>
                         <th>Fecha</th>
+                        <th>Medoto pago</th>
                         <th>Monto</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -102,7 +107,7 @@
         <section id="visits-section" class="section" style="display: none;">
             <div class="section-header">
                 <h2>Gestión de Visitas</h2>
-                <button class="btn btn-primary" onclick="showModal('visitModal')">
+                <button class="btn btn-primary" data-modal="visitModal">
                     <i class="fas fa-plus"></i> Nueva Visita
                 </button>
             </div>
@@ -123,7 +128,7 @@
     <!-- Modal de Usuario -->
     <div id="userModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="hideModal('userModal')">&times;</span>
+            <span class="close-modal" data-modal="userModal">&times;</span>
             <h2>Usuario</h2>
             <form id="userForm">
                 <div class="form-group">
@@ -155,10 +160,38 @@
         </div>
     </div>
 
+    <!-- Modal de Vehículo -->
+    <div id="vehicleModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Editar Vehículo</h3>
+            <form id="vehicleForm">
+                <input type="hidden" name="id">
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" name="marca" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" name="modelo" required>
+                </div>
+                <div class="form-group">
+                    <label>Año</label>
+                    <input type="number" name="año" required>
+                </div>
+                <div class="form-group">
+                    <label>Precio</label>
+                    <input type="number" name="precio" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal de Compra -->
     <div id="purchaseModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="hideModal('purchaseModal')">&times;</span>
+            <span class="close-modal" data-modal="purchaseModal">&times;</span>
             <h2>Compra</h2>
             <form id="purchaseForm">
                 <div class="form-group">
@@ -185,7 +218,7 @@
     <!-- Modal de Visita -->
     <div id="visitModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" onclick="hideModal('visitModal')">&times;</span>
+            <span class="close-modal" data-modal="visitModal">&times;</span>
             <h2>Visita</h2>
             <form id="visitForm">
                 <div class="form-group">
@@ -221,7 +254,7 @@
             <p id="confirmMessage"></p>
             <div class="modal-actions">
                 <button class="btn btn-danger" id="confirmYes">Sí, eliminar</button>
-                <button class="btn btn-secondary" onclick="hideModal('confirmModal')">Cancelar</button>
+                <button class="btn btn-secondary" data-modal="confirmModal">Cancelar</button>
             </div>
         </div>
     </div>
@@ -230,7 +263,6 @@
         <p>&copy; 2024 Sale Cars. Todos los derechos reservados.</p>
     </footer>
 
-    <script src="../js/config.js" type="module"></script>
-    <script src="../js/admin-dashboard.js" type="module"></script>
+    
 </body>
 </html>

@@ -1,4 +1,13 @@
-import { API_URL } from './config.js';
+import { API_URLS } from './config.js';
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    // Eliminar el token del localStorage
+    localStorage.removeItem('token');
+
+    // Redireccionar a la página de login (ajusta la ruta según tu estructura)
+    window.location.href = '../index.html'; 
+});
+
 
 // Verificación de autenticación
 const checkAuth = () => {
@@ -17,7 +26,7 @@ document.addEventListener('DOMContentLoaded', checkAuth);
 class UserManager {
     static async getAllUsers() {
         try {
-            const response = await fetch(`${API_URL}/usuarios`, {
+            const response = await fetch(`${API_URLS.usuarios}/usuarios`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -32,7 +41,7 @@ class UserManager {
 
     static async getUserById(id) {
         try {
-            const response = await fetch(`${API_URL}/usuarios/${id}`, {
+            const response = await fetch(`${API_URLS.usuarios}/usuarios/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -46,7 +55,7 @@ class UserManager {
 
     static async createUser(userData) {
         try {
-            const response = await fetch(`${API_URL}/usuarios/register`, {
+            const response = await fetch(`${API_URLS.usuarios}/usuarios/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,7 +72,7 @@ class UserManager {
 
     static async updateUser(id, userData) {
         try {
-            const response = await fetch(`${API_URL}/usuarios/${id}`, {
+            const response = await fetch(`${API_URLS.usuarios}/usuarios/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -80,7 +89,7 @@ class UserManager {
 
     static async deleteUser(id) {
         try {
-            const response = await fetch(`${API_URL}/usuarios/${id}`, {
+            const response = await fetch(`${API_URLS.usuarios}/usuarios/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -98,12 +107,14 @@ class UserManager {
 class VehicleManager {
     static async getAllVehicles() {
         try {
-            const response = await fetch(`${API_URL}/vehiculos`, {
+            const response = await fetch(`${API_URLS.vehiculos}/vehiculos`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
-            return await response.json();
+            const vehicles = await response.json();
+            return vehicles;
+            
         } catch (error) {
             console.error('Error al obtener vehículos:', error);
             throw error;
@@ -112,7 +123,7 @@ class VehicleManager {
 
     static async getVehicleById(id) {
         try {
-            const response = await fetch(`${API_URL}/vehiculos/${id}`, {
+            const response = await fetch(`${API_URLS.vehiculos}/vehiculos/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -124,9 +135,42 @@ class VehicleManager {
         }
     }
 
+    static async updateVehicle(id, vehicleData) {
+        try {
+            console.log(`Actualizando vehículo ${id}:`, vehicleData);
+            const response = await fetch(`${API_URLS.vehiculos}/vehiculos/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(vehicleData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error(`Error al actualizar vehículo ${id}:`, error);
+            throw error;
+        }
+    }
+
+    static async markAsSold(id) {
+        try {
+            const response = await fetch(`${API_URLS.vehiculos}/vehiculos/${id}/vendido`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error(`Error al marcar vehículo ${id} como vendido:`, error);
+            throw error;
+        }
+    }
+
     static async deleteVehicle(id) {
         try {
-            const response = await fetch(`${API_URL}/vehiculos/${id}`, {
+            const response = await fetch(`${API_URLS.vehiculos}/vehiculos/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -138,13 +182,30 @@ class VehicleManager {
             throw error;
         }
     }
+    
+    static async createVehicle(vehicleData) {
+        try {
+            const response = await fetch(`${API_URLS.vehiculos}/vehiculos`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(vehicleData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error al crear vehículo:', error);
+            throw error;
+        }
+    }
 }
 
 // Gestión de Compras
 class PurchaseManager {
     static async getAllPurchases() {
         try {
-            const response = await fetch(`${API_URL}/compras`, {
+            const response = await fetch(`${API_URLS.compras}/compras/all/`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -158,7 +219,7 @@ class PurchaseManager {
 
     static async getPurchaseById(id) {
         try {
-            const response = await fetch(`${API_URL}/compras/${id}`, {
+            const response = await fetch(`${API_URLS.compras}/compras/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -172,7 +233,7 @@ class PurchaseManager {
 
     static async createPurchase(purchaseData) {
         try {
-            const response = await fetch(`${API_URL}/compras`, {
+            const response = await fetch(`${API_URLS.compras}/compras`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -189,7 +250,7 @@ class PurchaseManager {
 
     static async updatePurchase(id, purchaseData) {
         try {
-            const response = await fetch(`${API_URL}/compras/${id}`, {
+            const response = await fetch(`${API_URLS.compras}/compras/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -206,7 +267,7 @@ class PurchaseManager {
 
     static async deletePurchase(id) {
         try {
-            const response = await fetch(`${API_URL}/compras/${id}`, {
+            const response = await fetch(`${API_URLS.compras}/compras/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -224,12 +285,14 @@ class PurchaseManager {
 class VisitManager {
     static async getAllVisits() {
         try {
-            const response = await fetch(`${API_URL}/visitas`, {
+            const response = await fetch(`${API_URLS.compras}/compras/visitasver/`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
-            return await response.json();
+            const visitas = await response.json();
+            return visitas;
+            
         } catch (error) {
             console.error('Error al obtener visitas:', error);
             throw error;
@@ -238,7 +301,7 @@ class VisitManager {
 
     static async createVisit(visitData) {
         try {
-            const response = await fetch(`${API_URL}/visitas`, {
+            const response = await fetch(`${API_URLS.visitas}/visitas`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -254,6 +317,27 @@ class VisitManager {
     }
 }
 
+// Funciones para manejar modales
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.display = 'block';
+    if (modalId === 'purchaseModal' || modalId === 'visitModal') {
+        loadModalSelects();
+    }
+}
+
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.display = 'none';
+    const form = modal.querySelector('form');
+    if (form) {
+        form.reset();
+        if (form.dataset.userId) delete form.dataset.userId;
+        if (form.dataset.vehicleId) delete form.dataset.vehicleId;
+        if (form.dataset.purchaseId) delete form.dataset.purchaseId;
+    }
+}
+
 // Manejadores de eventos UI
 document.addEventListener('DOMContentLoaded', () => {
     // Cargar datos iniciales
@@ -262,12 +346,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners para navegación
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            const section = e.target.getAttribute('data-section');
+            const section = e.target.closest('.nav-item').getAttribute('data-section');
             showSection(section);
         });
     });
 
-    // Event listeners para formularios
+    // Event listeners para botones de modal
+    document.querySelectorAll('[data-modal]').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const modalId = e.target.closest('[data-modal]').getAttribute('data-modal');
+            if (e.target.classList.contains('close-modal') || e.target.classList.contains('btn-secondary')) {
+                hideModal(modalId);
+            } else {
+                showModal(modalId);
+            }
+        });
+    });
+
+    // Setup formularios
     setupFormListeners();
 });
 
@@ -280,7 +376,11 @@ async function loadDashboardData() {
             PurchaseManager.getAllPurchases(),
             VisitManager.getAllVisits()
         ]);
-
+        console.log('Usuarios cargados:', users);
+        console.log('Vehículos cargados:', vehicles);
+        console.log('Compras cargadas:', purchases);
+        console.log('Visitas cargadas:', visits);
+        
         updateUsersTable(users);
         updateVehiclesTable(vehicles);
         updatePurchasesTable(purchases);
@@ -296,47 +396,108 @@ function updateUsersTable(users) {
     const tableBody = document.querySelector('#usersTable tbody');
     tableBody.innerHTML = users.map(user => `
         <tr>
-            <td>${user.name}</td>
+            <td>${user.nombre}</td>
             <td>${user.email}</td>
-            <td>${user.phone}</td>
-            <td>${user.role}</td>
+            <td>${user.telefono}</td>
+            <td>${user.rol}</td>
             <td>
                 <button class="btn btn-primary btn-edit" data-id="${user.id}">Editar</button>
                 <button class="btn btn-danger btn-delete" data-id="${user.id}">Eliminar</button>
             </td>
         </tr>
     `).join('');
+    
+    // Añadir event listeners para los botones de edición
+    document.querySelectorAll('#usersTable .btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            handleEdit('users', id);
+        });
+    });
+    
+    // Añadir event listeners para los botones de eliminación
+    document.querySelectorAll('#usersTable .btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            handleDelete('users', id);
+        });
+    });
 }
 
 function updateVehiclesTable(vehicles) {
     const tableBody = document.querySelector('#vehiclesTable tbody');
-    tableBody.innerHTML = vehicles.map(vehicle => `
+    tableBody.innerHTML = vehicles.data.map(vehicle => `
         <tr>
-            <td>${vehicle.brand}</td>
-            <td>${vehicle.model}</td>
-            <td>${vehicle.year}</td>
-            <td>${vehicle.price}</td>
+            <td>${vehicle.id}</td>
+            <td>${vehicle.marca}</td>
+            <td>${vehicle.modelo}</td>
+            <td>${vehicle.año}</td>
+            <td>${vehicle.precio}</td>
+            <td>${vehicle.vendido ? 'Sí' : 'No'}</td>
             <td>
+                <button class="btn btn-primary btn-edit" data-id="${vehicle.id}">Editar</button>
+                <button class="btn btn-success btn-sold" data-id="${vehicle.id}">Marcar Vendido</button>
                 <button class="btn btn-danger btn-delete" data-id="${vehicle.id}">Eliminar</button>
             </td>
         </tr>
     `).join('');
+    
+    // Añadir event listeners para los botones de edición
+    document.querySelectorAll('#vehiclesTable .btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            handleEdit('vehicles', id);
+        });
+    });
+    
+    // Añadir event listeners para los botones de marcar como vendido
+    document.querySelectorAll('#vehiclesTable .btn-sold').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            markVehicleAsSold(id);
+        });
+    });
+    
+    // Añadir event listeners para los botones de eliminación
+    document.querySelectorAll('#vehiclesTable .btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            handleDelete('vehicles', id);
+        });
+    });
 }
 
 function updatePurchasesTable(purchases) {
     const tableBody = document.querySelector('#purchasesTable tbody');
     tableBody.innerHTML = purchases.map(purchase => `
         <tr>
-            <td>${purchase.userId}</td>
-            <td>${purchase.vehicleId}</td>
-            <td>${purchase.date}</td>
-            <td>${purchase.amount}</td>
+            <td>${purchase.user_id}</td>
+            <td>${purchase.vehicle_id}</td>
+            <td>${purchase.fecha}</td>
+            <td>${purchase.precio_total}</td>
+            <td>${purchase.metodo_pago}</td>
+            <td>${purchase.estado}</td>
             <td>
                 <button class="btn btn-primary btn-edit" data-id="${purchase.id}">Editar</button>
                 <button class="btn btn-danger btn-delete" data-id="${purchase.id}">Eliminar</button>
             </td>
         </tr>
     `).join('');
+    
+    // Añadir event listeners para los botones de edición y eliminación
+    document.querySelectorAll('#purchasesTable .btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            handleEdit('purchases', id);
+        });
+    });
+    
+    document.querySelectorAll('#purchasesTable .btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            handleDelete('purchases', id);
+        });
+    });
 }
 
 function updateVisitsTable(visits) {
@@ -377,27 +538,6 @@ function showSection(sectionId) {
     document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
 }
 
-// Funciones para manejar modales
-function showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    modal.style.display = 'block';
-    if (modalId === 'purchaseModal') {
-        loadModalSelects();
-    } else if (modalId === 'visitModal') {
-        loadModalSelects();
-    }
-}
-
-function hideModal(modalId) {
-    const modal = document.getElementById(modalId);
-    modal.style.display = 'none';
-    const form = modal.querySelector('form');
-    if (form) {
-        form.reset();
-        delete form.dataset.id;
-    }
-}
-
 // Cargar selects en modales
 async function loadModalSelects() {
     try {
@@ -409,7 +549,7 @@ async function loadModalSelects() {
         // Actualizar selects de usuarios
         const userSelects = document.querySelectorAll('select[name="userId"]');
         const userOptions = users.map(user => 
-            `<option value="${user.id}">${user.name} (${user.email})</option>`
+            `<option value="${user.id}">${user.nombre} (${user.email})</option>`
         ).join('');
 
         userSelects.forEach(select => {
@@ -418,8 +558,8 @@ async function loadModalSelects() {
 
         // Actualizar selects de vehículos
         const vehicleSelects = document.querySelectorAll('select[name="vehicleId"]');
-        const vehicleOptions = vehicles.map(vehicle => 
-            `<option value="${vehicle.id}">${vehicle.brand} ${vehicle.model} (${vehicle.year})</option>`
+        const vehicleOptions = vehicles.data.map(vehicle => 
+            `<option value="${vehicle.id}">${vehicle.marca} ${vehicle.modelo} (${vehicle.año})</option>`
         ).join('');
 
         vehicleSelects.forEach(select => {
@@ -433,16 +573,75 @@ async function loadModalSelects() {
 
 // Configuración de listeners para formularios
 function setupFormListeners() {
+    // Formulario de vehículo
+    const vehicleForm = document.getElementById('vehicleForm');
+    if (vehicleForm) {
+        vehicleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const vehicleData = {
+                marca: vehicleForm.marca.value,
+                modelo: vehicleForm.modelo.value,
+                año: parseInt(vehicleForm.año.value),
+                precio: parseFloat(vehicleForm.precio.value)
+            };
+
+            try {
+                const vehicleId = vehicleForm.dataset.vehicleId;
+                console.log('ID del vehículo a actualizar:', vehicleId);
+                console.log('Datos del vehículo:', vehicleData);
+                
+                if (vehicleId) {
+                    // Si hay un ID, es una actualización
+                    await VehicleManager.updateVehicle(vehicleId, vehicleData);
+                    showNotification('Vehículo actualizado exitosamente');
+                } else {
+                    // Si no hay ID, es una creación
+                    await VehicleManager.createVehicle(vehicleData);
+                    showNotification('Vehículo creado exitosamente');
+                }
+                hideModal('vehicleModal');
+                loadDashboardData(); // Recargar datos para actualizar la tabla
+            } catch (error) {
+                console.error('Error al procesar el vehículo:', error);
+                showNotification('Error al procesar el vehículo', 'error');
+            }
+        });
+    }
+
+    // Función para marcar vehículo como vendido
+    function markVehicleAsSold(id) {
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmYesBtn = document.getElementById('confirmYes');
+        
+        confirmMessage.textContent = `¿Está seguro de marcar este vehículo como vendido?`;
+        
+        confirmYesBtn.onclick = async () => {
+            try {
+                await VehicleManager.markAsSold(id);
+                showNotification('Vehículo marcado como vendido');
+                hideModal('confirmModal');
+                loadDashboardData();
+            } catch (error) {
+                console.error(`Error al marcar como vendido:`, error);
+                showNotification('Error al marcar como vendido', 'error');
+            }
+        };
+        
+        showModal('confirmModal');
+    }
+
     // Formulario de usuario
     const userForm = document.getElementById('userForm');
     if (userForm) {
         userForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            // Adaptar nombres de campos según la API
             const userData = {
-                name: userForm.name.value,
+                nombre: userForm.name.value,
                 email: userForm.email.value,
-                phone: userForm.phone.value,
-                role: userForm.role.value
+                telefono: userForm.phone.value,
+                rol: userForm.role.value
             };
 
             if (userForm.password.value) {
@@ -451,6 +650,9 @@ function setupFormListeners() {
 
             try {
                 const userId = userForm.dataset.userId;
+                console.log('ID del usuario a actualizar:', userId);
+                console.log('Datos del usuario:', userData);
+                
                 if (userId) {
                     await UserManager.updateUser(userId, userData);
                     showNotification('Usuario actualizado exitosamente');
@@ -461,6 +663,7 @@ function setupFormListeners() {
                 hideModal('userModal');
                 loadDashboardData();
             } catch (error) {
+                console.error('Error al procesar el usuario:', error);
                 showNotification('Error al procesar el usuario', 'error');
             }
         });
@@ -472,14 +675,19 @@ function setupFormListeners() {
         purchaseForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const purchaseData = {
-                userId: purchaseForm.userId.value,
-                vehicleId: purchaseForm.vehicleId.value,
-                amount: parseFloat(purchaseForm.amount.value),
-                date: purchaseForm.date.value
+                user_id: purchaseForm.userId.value,
+                vehicle_id: purchaseForm.vehicleId.value,
+                precio_total: parseFloat(purchaseForm.amount.value),
+                fecha: purchaseForm.date.value,
+                metodo_pago: purchaseForm.paymentMethod ? purchaseForm.paymentMethod.value : 'Tarjeta',
+                estado: purchaseForm.status ? purchaseForm.status.value : 'Completado'
             };
 
             try {
                 const purchaseId = purchaseForm.dataset.purchaseId;
+                console.log('ID de la compra a actualizar:', purchaseId);
+                console.log('Datos de la compra:', purchaseData);
+                
                 if (purchaseId) {
                     await PurchaseManager.updatePurchase(purchaseId, purchaseData);
                     showNotification('Compra actualizada exitosamente');
@@ -490,6 +698,7 @@ function setupFormListeners() {
                 hideModal('purchaseModal');
                 loadDashboardData();
             } catch (error) {
+                console.error('Error al procesar la compra:', error);
                 showNotification('Error al procesar la compra', 'error');
             }
         });
@@ -513,23 +722,11 @@ function setupFormListeners() {
                 hideModal('visitModal');
                 loadDashboardData();
             } catch (error) {
+                console.error('Error al registrar la visita:', error);
                 showNotification('Error al registrar la visita', 'error');
             }
         });
     }
-
-    // Event listeners para botones de edición y eliminación
-    document.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('btn-edit')) {
-            const id = e.target.dataset.id;
-            const type = e.target.closest('section').id.replace('-section', '');
-            handleEdit(type, id);
-        } else if (e.target.classList.contains('btn-delete')) {
-            const id = e.target.dataset.id;
-            const type = e.target.closest('section').id.replace('-section', '');
-            handleDelete(type, id);
-        }
-    });
 }
 
 // Manejar edición de elementos
@@ -543,6 +740,11 @@ async function handleEdit(type, id) {
                 data = await UserManager.getUserById(id);
                 modalId = 'userModal';
                 fillUserForm(data);
+                break;
+            case 'vehicles':
+                data = await VehicleManager.getVehicleById(id);
+                modalId = 'vehicleModal';
+                fillVehicleForm(data);
                 break;
             case 'purchases':
                 data = await PurchaseManager.getPurchaseById(id);
@@ -559,6 +761,69 @@ async function handleEdit(type, id) {
         console.error(`Error al cargar datos para edición:`, error);
         showNotification('Error al cargar datos', 'error');
     }
+}
+
+// Funciones para llenar formularios
+function fillVehicleForm(vehicleData) {
+    const form = document.getElementById('vehicleForm');
+    // Asegurarnos de que estamos guardando el ID correctamente en el dataset
+    form.dataset.vehicleId = vehicleData.id;
+    
+    // Llenar todos los campos con los datos recibidos
+    form.marca.value = vehicleData.marca;
+    form.modelo.value = vehicleData.modelo;
+    form.año.value = vehicleData.año;
+    form.precio.value = vehicleData.precio;
+    
+    console.log('Formulario de vehículo llenado con:', vehicleData);
+}
+
+function fillUserForm(userData) {
+    const form = document.getElementById('userForm');
+    form.dataset.userId = userData.id;
+    
+    // Manejar posibles variaciones en los nombres de los campos
+    form.name.value = userData.nombre || userData.name;
+    form.email.value = userData.email;
+    form.phone.value = userData.telefono || userData.phone;
+    form.role.value = userData.rol || userData.role;
+    form.password.value = ''; // No mostrar la contraseña actual
+    
+    console.log('Formulario de usuario llenado con:', userData);
+}
+
+function fillPurchaseForm(purchaseData) {
+    const form = document.getElementById('purchaseForm');
+    form.dataset.purchaseId = purchaseData.id;
+    
+    // Adaptar según la estructura real de los datos
+    form.userId.value = purchaseData.user_id || purchaseData.userId;
+    form.vehicleId.value = purchaseData.vehicle_id || purchaseData.vehicleId;
+    form.amount.value = purchaseData.precio_total || purchaseData.amount;
+    
+    // Formatear fecha si viene en formato ISO
+    if (purchaseData.fecha) {
+        const dateStr = purchaseData.fecha.includes('T') 
+            ? purchaseData.fecha.split('T')[0] 
+            : purchaseData.fecha;
+        form.date.value = dateStr;
+    } else if (purchaseData.date) {
+        const dateStr = purchaseData.date.includes('T') 
+            ? purchaseData.date.split('T')[0] 
+            : purchaseData.date;
+        form.date.value = dateStr;
+    }
+    
+    // Si existen estos campos en el formulario
+    if (form.paymentMethod && purchaseData.metodo_pago) {
+        form.paymentMethod.value = purchaseData.metodo_pago;
+    }
+    
+    if (form.status && purchaseData.estado) {
+        form.status.value = purchaseData.estado;
+    }
+    
+    console.log('Formulario de compra llenado con:', purchaseData);
 }
 
 // Manejar eliminación de elementos
@@ -592,26 +857,6 @@ function handleDelete(type, id) {
     };
 
     showModal('confirmModal');
-}
-
-// Funciones auxiliares para llenar formularios
-function fillUserForm(userData) {
-    const form = document.getElementById('userForm');
-    form.dataset.userId = userData.id;
-    form.name.value = userData.name;
-    form.email.value = userData.email;
-    form.phone.value = userData.phone;
-    form.role.value = userData.role;
-    form.password.value = ''; // No mostrar la contraseña actual
-}
-
-function fillPurchaseForm(purchaseData) {
-    const form = document.getElementById('purchaseForm');
-    form.dataset.purchaseId = purchaseData.id;
-    form.userId.value = purchaseData.userId;
-    form.vehicleId.value = purchaseData.vehicleId;
-    form.amount.value = purchaseData.amount;
-    form.date.value = purchaseData.date.split('T')[0];
 }
 
 // Exportar las clases para uso en otros módulos

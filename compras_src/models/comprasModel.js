@@ -4,11 +4,12 @@ const mysql = require("mysql2/promise");
 const fetch = require("node-fetch");
 
 // Configuración de la conexión a la base de datos MySQL
+// Configuración de la conexión a la base de datos MySQL
 const connection = mysql.createPool({
     host: "localhost",
     user: "root",
     password: "base123456",
-    database: "concesionario",
+    database: "comprasbd", // Base de datos para registrar compras
     port: 3306,
 });
 
@@ -17,7 +18,7 @@ const URLUSERS = "http://localhost:3001";
 const URLCARS = "http://localhost:3002";
 
 class Compra {
-    // Método para registrar una compra
+    
     // Método para registrar una compra
     static async registrarCompra(userId, vehicleId, precioTotal, metodoPago, visitaId) {
         console.log("Registrando compra con los siguientes datos:", { userId, vehicleId, precioTotal, metodoPago, visitaId });
@@ -76,6 +77,24 @@ class Compra {
         return rows;
     }
 
+    static async obtenerCompras(limit) {
+        let query = 'SELECT * FROM compras';
+        if (limit) {
+            query += ` LIMIT ${limit}`;
+        }
+        const [rows] = await connection.execute(query);
+        return rows;
+    }
+
+    static async obtenerVisitas(limit) {
+        let query = 'SELECT * FROM visitas';
+        if (limit) {
+            query += ` LIMIT ${limit}`;
+        }
+        const [rows] = await connection.execute(query);
+        return rows;
+    }
+
     // Método para obtener una compra por ID
     static async obtenerCompraPorId(purchaseId) {
         const [rows] = await connection.execute('SELECT * FROM compras WHERE id = ?', [purchaseId]);
@@ -93,7 +112,7 @@ class Compra {
         if (!purchase) {
             throw new Error("Compra no encontrada");
         }
-        // Aquí podrías agregar lógica para verificar si el vehículo ya está vendido
+       
         const vehicleResponse = await fetch(`${URLCARS}/api/vehiculos/${purchase.vehicle_id}`);
         const vehicleData = await vehicleResponse.json();
         if (vehicleData.estado === "vendido") {

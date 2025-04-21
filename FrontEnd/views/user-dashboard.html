@@ -23,6 +23,7 @@
                 <li><a href="#registrar-vehiculo">Registrar Vehículo</a></li>
                 <li><a href="#mis-compras">Mis Compras</a></li>
                 <li><a href="#mis-visitas">Mis Visitas</a></li>
+                <li><a href="#programar-visita">Programar Visita</a></li>
                 <li><a href="#mi-perfil">Mi Perfil</a></li>
             </ul>
         </aside>
@@ -40,13 +41,13 @@
             <section id="registrar-vehiculo" class="dashboard-section hidden">
                 <h2>Registrar Nuevo Vehículo</h2>
                 <form id="vehicleForm" class="form-group">
-                    <input type="text" id="marca" placeholder="Marca" required>
-                    <input type="text" id="modelo" placeholder="Modelo" required>
-                    <input type="number" id="año" placeholder="Año" required>
-                    <input type="number" id="precio" placeholder="Precio" required>
-                    <input type="number" id="kilometraje" placeholder="Kilometraje" required>
-                    <input type="file" id="imagen" accept="image/*">
-                    <button type="submit" class="btn btn-primary">Registrar Vehículo</button>
+                    <input type="text" id="marca" name="marca" placeholder="Marca" required>
+                    <input type="text" id="modelo" name="modelo" placeholder="Modelo" required>
+                    <input type="number" id="año" name="año" placeholder="Año" required>
+                    <input type="number" id="precio" name="precio" placeholder="Precio" required>
+                    <input type="number" id="kilometraje" name="kilometraje" placeholder="Kilometraje" required>
+                    <input type="file" id="imagen" name="imagen" accept="image/*">
+                    <button type="submit" class="btn btn-primary">Guardar Vehículo</button>
                 </form>
             </section>
 
@@ -66,27 +67,55 @@
                 </div>
             </section>
 
+            <!-- Nueva sección: Programar Visita -->
+            <section id="programar-visita" class="dashboard-section hidden">
+                <h2>Programar Visita</h2>
+                <form id="visitForm" class="form-group">
+                    <select id="vehicleId" name="vehicleId" required>
+                        <option value="">Seleccione un vehículo</option>
+                        <!-- Se cargará dinámicamente -->
+                    </select>
+                    <input type="date" id="visitDate" name="visitDate" placeholder="Fecha de visita" required>
+                    <button type="submit" class="btn btn-primary">Programar Visita</button>
+                </form>
+            </section>
+
             <!-- Sección de Mi Perfil -->
             <section id="mi-perfil" class="dashboard-section hidden">
                 <h2>Mi Perfil</h2>
                 <form id="profileForm" class="form-group">
-                    <input type="text" id="profileName" placeholder="Nombre" required>
-                    <input type="email" id="profileEmail" placeholder="Email" required>
-                    <input type="tel" id="profilePhone" placeholder="Teléfono" required>
-                    <input type="password" id="currentPassword" placeholder="Contraseña Actual">
-                    <input type="password" id="newPassword" placeholder="Nueva Contraseña">
+                    <input type="text" id="profileName" name="profileName" placeholder="Nombre" required>
+                    <input type="email" id="profileEmail" name="profileEmail" placeholder="Email" required>
+                    <input type="tel" id="profilePhone" name="profilePhone" placeholder="Teléfono" required>
+                    <h3>Cambiar Contraseña</h3>
+                    <input type="password" id="currentPassword" name="currentPassword" placeholder="Contraseña Actual">
+                    <input type="password" id="newPassword" name="newPassword" placeholder="Nueva Contraseña">
                     <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
                 </form>
-                <button id="deleteAccountBtn" class="btn btn-danger">Eliminar Cuenta</button>
+                <div class="profile-actions">
+                    <button onclick="showForgotPasswordModal()" class="btn btn-secondary">¿Olvidaste tu contraseña?</button>
+                    <button id="deleteAccountBtn" class="btn btn-danger">Eliminar Cuenta</button>
+                </div>
             </section>
         </div>
     </main>
+
+    <!-- Modal de Recuperación de Contraseña -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="hideModal('forgotPasswordModal')">&times;</span>
+            <h2>Recuperar Contraseña</h2>
+            <form id="forgotPasswordForm">
+                <input type="email" id="recoveryEmail" name="recoveryEmail" placeholder="Ingrese su email" required>
+                <button type="submit" class="btn btn-primary">Enviar Instrucciones</button>
+            </form>
+        </div>
+    </div>
 
     <footer>
         <p>&copy; 2024 Sale Cars. Todos los derechos reservados.</p>
     </footer>
 
-    <script src="../js/api.js"></script>
-    <script src="../js/user-dashboard.js"></script>
+    <script type="module" src="../js/user-dashboard.js"></script>
 </body>
 </html>

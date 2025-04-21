@@ -46,20 +46,10 @@ const postVehiculo = async (req, res) => {
 // Obtener todos los vehículos
 const getVehiculos = async (req, res) => {
     try {
-        const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
-        const vehiculos = await Vehiculo.obtenerVehiculos(limit);
-        res.status(200).json({
-            success: true,
-            count: vehiculos.length,
-            data: vehiculos
-        });
+        const vehiculos = await Vehiculo.obtenerVehiculos();
+        res.status(200).json(vehiculos);
     } catch (err) {
-        console.error('Error al obtener vehículos:', err);
-        res.status(500).json({
-            success: false,
-            message: "Error al obtener vehículos",
-            error: err.message
-        });
+        res.status(500).json({ message: "Error al obtener vehículos", error: err });
     }
 };
 
@@ -69,22 +59,11 @@ const getVehiculoPorId = async (req, res) => {
     try {
         const vehiculo = await Vehiculo.obtenerVehiculoPorId(id);
         if (!vehiculo) {
-            return res.status(404).json({
-                success: false,
-                message: "Vehículo no encontrado"
-            });
+            return res.status(404).json({ message: "Vehículo no encontrado" });
         }
-        res.status(200).json({
-            success: true,
-            data: vehiculo
-        });
+        res.status(200).json(vehiculo);
     } catch (err) {
-        console.error('Error al obtener vehículo por ID:', err);
-        res.status(500).json({
-            success: false,
-            message: "Error al obtener el vehículo",
-            error: err.message
-        });
+        res.status(500).json({ message: "Error al obtener el vehículo", error: err });
     }
 };
 
@@ -122,19 +101,19 @@ const marcarComoVendido = async (req, res) => {
     }
 };
 
-// Buscar vehículos con filtros
+// Buscar vehículos por marca, modelo o año
 const buscarVehiculos = async (req, res) => {
-    try {
-        const { marca, modelo, año, precio_min, precio_max } = req.body;
-        
-        console.log('Filtros recibidos:', req.body);
+    // Extrae TODOS los posibles filtros
+    const { marca, modelo, año, estado, precio_min, precio_max } = req.query;
 
+    try {
         const vehiculos = await Vehiculo.buscarVehiculos({
             marca,
             modelo,
             año,
-            precio_min,
-            precio_max
+            estado,       // Nuevo filtro
+            precio_min,    // Nuevo filtro
+            precio_max     // Nuevo filtro
         });
 
         res.status(200).json({
@@ -144,99 +123,8 @@ const buscarVehiculos = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Error en búsqueda de vehículos:', err);
         res.status(500).json({
             success: false,
-            message: "Error al buscar vehículos",
-            error: err.message
-        });
-    }
-};
-
-// Obtener marcas únicas
-const getMarcas = async (req, res) => {
-    try {
-        console.log('Solicitud recibida para obtener marcas');
-        const marcas = await Vehiculo.obtenerMarcas();
-        console.log('Marcas obtenidas:', marcas);
-        
-        if (!marcas || marcas.length === 0) {
-            return res.status(200).json({
-                success: true,
-                count: 0,
-                data: []
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            count: marcas.length,
-            data: marcas
-        });
-    } catch (err) {
-        console.error('Error al obtener marcas:', err);
-        res.status(500).json({
-            success: false,
-            message: "Error al obtener marcas",
-            error: err.message
-        });
-    }
-};
-
-// Obtener vehículos destacados
-const getVehiculosDestacados = async (req, res) => {
-    try {
-        const vehiculos = await Vehiculo.obtenerVehiculosDestacados();
-        res.status(200).json({
-            success: true,
-            count: vehiculos.length,
-            data: vehiculos
-        });
-    } catch (err) {
-        console.error('Error al obtener vehículos destacados:', err);
-        res.status(500).json({
-            success: false,
-            message: "Error al obtener vehículos destacados",
-            error: err.message
-        });
-    }
-};
-
-// Obtener modelos por marca
-const getModelosPorMarca = async (req, res) => {
-    const { marca } = req.params;
-    try {
-        const modelos = await Vehiculo.obtenerModelosPorMarca(marca);
-        res.status(200).json({
-            success: true,
-            count: modelos.length,
-            data: modelos
-        });
-    } catch (err) {
-        console.error('Error al obtener modelos:', err);
-        res.status(500).json({
-            success: false,
-            message: "Error al obtener modelos",
-            error: err.message
-        });
-    }
-};
-
-// Obtener años por marca y modelo
-const getAñosPorMarcaYModelo = async (req, res) => {
-    const { marca, modelo } = req.params;
-    try {
-        const años = await Vehiculo.obtenerAñosPorMarcaYModelo(marca, modelo);
-        res.status(200).json({
-            success: true,
-            count: años.length,
-            data: años
-        });
-    } catch (err) {
-        console.error('Error al obtener años:', err);
-        res.status(500).json({
-            success: false,
-            message: "Error al obtener años",
             error: err.message
         });
     }
@@ -250,9 +138,5 @@ module.exports = {
     putVehiculo,
     deleteVehiculo,
     marcarComoVendido,
-    buscarVehiculos,
-    getMarcas,
-    getVehiculosDestacados,
-    getModelosPorMarca,
-    getAñosPorMarcaYModelo
+    buscarVehiculos
 };
