@@ -33,6 +33,9 @@
             <li class="nav-item" data-section="visits-section">
                 <i class="fas fa-calendar-check"></i> Visitas
             </li>
+            <li class="nav-item" data-section="statistics-section">
+                <i class="fas fa-chart-bar"></i> Estadísticas
+            </li>
         </ul>
     </nav>
 
@@ -48,6 +51,7 @@
             <table id="usersTable">
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Teléfono</th>
@@ -72,6 +76,7 @@
                         <th>Modelo</th>
                         <th>Año</th>
                         <th>Precio</th>
+                        <th>Kilometraje</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -83,9 +88,10 @@
         <section id="purchases-section" class="section" style="display: none;">
             <div class="section-header">
                 <h2>Gestión de Compras</h2>
-                <button class="btn btn-primary" data-modal="purchaseModal">
+                <button id="addPurchaseBtn" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Nueva Compra
-                </button>
+                  </button>
+            
             </div>
             <table id="purchasesTable">
                 <thead>
@@ -123,6 +129,31 @@
                 <tbody></tbody>
             </table>
         </section>
+
+        <!-- Sección de Estadísticas -->
+        <section id="statistics-section" class="section" style="display: none;">
+            <div class="section-header">
+                <h2>Estadísticas</h2>
+            </div>
+            <div class="statistics-container">
+                <div class="stat-card">
+                    <h3>Ventas Totales</h3>
+                    <div id="totalSales" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Vehículos Disponibles</h3>
+                    <div id="availableVehicles" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Usuarios Registrados</h3>
+                    <div id="totalUsers" class="stat-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Visitas Programadas</h3>
+                    <div id="scheduledVisits" class="stat-value">0</div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Modal de Usuario -->
@@ -131,9 +162,10 @@
             <span class="close-modal" data-modal="userModal">&times;</span>
             <h2>Usuario</h2>
             <form id="userForm">
+                
                 <div class="form-group">
                     <label for="name">Nombre</label>
-                    <input type="text" id="name" name="name" required>
+                    <input type="text" id="name" name="nombre" required>
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -141,7 +173,7 @@
                 </div>
                 <div class="form-group">
                     <label for="phone">Teléfono</label>
-                    <input type="tel" id="phone" name="phone" required>
+                    <input type="tel" id="phone" name="telefono" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Contraseña</label>
@@ -166,49 +198,101 @@
             <span class="close-modal">&times;</span>
             <h3>Editar Vehículo</h3>
             <form id="vehicleForm">
-                <input type="hidden" name="id">
+                <input type="hidden" id="editVehicleId" name="id">
                 <div class="form-group">
                     <label>Marca</label>
-                    <input type="text" name="marca" required>
+                    <input id="editMarca" type="text" name="marca" required>
                 </div>
                 <div class="form-group">
                     <label>Modelo</label>
-                    <input type="text" name="modelo" required>
+                    <input id="editModelo" type="text" name="modelo" required>
                 </div>
                 <div class="form-group">
                     <label>Año</label>
-                    <input type="number" name="año" required>
+                    <input id="editAño" type="number" name="año" required>
                 </div>
                 <div class="form-group">
                     <label>Precio</label>
-                    <input type="number" name="precio" required>
+                    <input id="editPrecio" type="number" name="precio" required>
+                </div>
+                <div class="form-group">
+                    <label>Kilometraje</label>
+                    <input id="editKilometraje" type="number" name="kilometraje" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Guardar</button>
             </form>
         </div>
     </div>
 
+
+
     <!-- Modal de Compra -->
-    <div id="purchaseModal" class="modal">
+    <div id="registerPurchaseModal" class="modal">
         <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Registrar Nueva Compra</h3>
+                <span class="close-modal">&times;</span>
+              </div>
+              <div class="modal-body">
+                <form id="registerPurchaseForm">
+                  <div class="form-group">
+                    <label for="purchaseUserId">Usuario:</label>
+                    <select id="purchaseUserId" name="userId" class="form-control" required>
+                      <option value="">Seleccione un usuario</option>
+                      <!-- Options will be loaded dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="purchaseVehicleId">Vehículo:</label>
+                    <select id="purchaseVehicleId" name="vehicleId" class="form-control" required>
+                      <option value="">Seleccione un vehículo</option>
+                      <!-- Options will be loaded dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="purchasePrecioTotal">Precio Total:</label>
+                    <input type="number" id="purchasePrecioTotal" name="precioTotal" class="form-control" required min="0" step="0.01">
+                  </div>
+                  <div class="form-group">
+                    <label for="purchaseMetodoPago">Método de Pago:</label>
+                    <select id="purchaseMetodoPago" name="metodoPago" class="form-control" required>
+                      <option value="Tarjeta">Tarjeta</option>
+                      <option value="Efectivo">Efectivo</option>
+                      <option value="Transferencia">Transferencia</option>
+                      <option value="Financiación">Financiación</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="purchaseVisitaId">ID de Visita (Obligatorio):</label>
+                    <select id="purchaseVisitaId" name="visitaId" class="form-control">
+                      <option value="">Sin visita asociada</option>
+                      <!-- Options will be loaded dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar Compra</button>
+                  </div>
+                </form>
+              </div>
             <span class="close-modal" data-modal="purchaseModal">&times;</span>
-            <h2>Compra</h2>
+            <h2>Editar Compra</h2>
             <form id="purchaseForm">
                 <div class="form-group">
-                    <label for="userId">Usuario</label>
-                    <select id="userId" name="userId" required></select>
+                    <label for="paymentMethod">Método de Pago</label>
+                    <select id="paymentMethod" name="paymentMethod" required>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="Efectivo">Efectivo</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="vehicleId">Vehículo</label>
-                    <select id="vehicleId" name="vehicleId" required></select>
-                </div>
-                <div class="form-group">
-                    <label for="amount">Monto</label>
-                    <input type="number" id="amount" name="amount" required>
-                </div>
-                <div class="form-group">
-                    <label for="date">Fecha</label>
-                    <input type="date" id="date" name="date" required>
+                    <label for="status">Estado</label>
+                    <select id="status" name="status" required>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Completado">Completado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Guardar</button>
             </form>
@@ -222,27 +306,22 @@
             <h2>Visita</h2>
             <form id="visitForm">
                 <div class="form-group">
-                    <label for="visitUserId">Usuario</label>
-                    <select id="visitUserId" name="userId" required></select>
+                    <label>Usuario</label>
+                    <select name="userId" class="form-control" required></select>
                 </div>
                 <div class="form-group">
-                    <label for="visitVehicleId">Vehículo</label>
-                    <select id="visitVehicleId" name="vehicleId" required></select>
+                    <label>Vehículo</label>
+                    <select name="vehicleId" class="form-control" required></select>
                 </div>
                 <div class="form-group">
-                    <label for="visitDate">Fecha</label>
-                    <input type="datetime-local" id="visitDate" name="date" required>
+                    <label>Fecha y Hora</label>
+                    <input type="datetime-local" name="date" class="form-control" required>
                 </div>
-                <div class="form-group">
-                    <label for="status">Estado</label>
-                    <select id="status" name="status" required>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="confirmada">Confirmada</option>
-                        <option value="cancelada">Cancelada</option>
-                        <option value="completada">Completada</option>
-                    </select>
+                <div class="form-check">
+                    <input type="checkbox" name="status" class="form-check-input" id="asistio">
+                    <label class="form-check-label" for="asistio">Asistió</label>
                 </div>
-                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="submit" class="btn btn-primary">Guardar Visita</button>
             </form>
         </div>
     </div>

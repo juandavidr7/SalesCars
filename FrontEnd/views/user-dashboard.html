@@ -8,11 +8,13 @@
 </head>
 <body>
     <header>
+        <div class="auth-buttons">
+            <span id="userWelcome">Bienvenido, </span>
+            <button id="logoutBtn" class="btn btn-danger">Cerrar Sesión</button>
+        </div>
         <div class="logo">Sale Cars</div>
         <nav>
-            <div class="auth-buttons">
-                <button id="logoutBtn" class="btn btn-danger">Cerrar Sesión</button>
-            </div>
+            
         </nav>
     </header>
 
@@ -46,7 +48,7 @@
                     <input type="number" id="año" name="año" placeholder="Año" required>
                     <input type="number" id="precio" name="precio" placeholder="Precio" required>
                     <input type="number" id="kilometraje" name="kilometraje" placeholder="Kilometraje" required>
-                    <input type="file" id="imagen" name="imagen" accept="image/*">
+                    
                     <button type="submit" class="btn btn-primary">Guardar Vehículo</button>
                 </form>
             </section>
@@ -92,25 +94,12 @@
                     <input type="password" id="newPassword" name="newPassword" placeholder="Nueva Contraseña">
                     <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
                 </form>
-                <div class="profile-actions">
-                    <button onclick="showForgotPasswordModal()" class="btn btn-secondary">¿Olvidaste tu contraseña?</button>
-                    <button id="deleteAccountBtn" class="btn btn-danger">Eliminar Cuenta</button>
-                </div>
+                
             </section>
         </div>
     </main>
 
-    <!-- Modal de Recuperación de Contraseña -->
-    <div id="forgotPasswordModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="hideModal('forgotPasswordModal')">&times;</span>
-            <h2>Recuperar Contraseña</h2>
-            <form id="forgotPasswordForm">
-                <input type="email" id="recoveryEmail" name="recoveryEmail" placeholder="Ingrese su email" required>
-                <button type="submit" class="btn btn-primary">Enviar Instrucciones</button>
-            </form>
-        </div>
-    </div>
+    
 
     <footer>
         <p>&copy; 2024 Sale Cars. Todos los derechos reservados.</p>

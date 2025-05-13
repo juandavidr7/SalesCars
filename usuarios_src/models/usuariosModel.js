@@ -39,14 +39,14 @@ class Usuario {
     }
 
     // Método mejorado para registrar usuario
-    static async registrarUsuario(email, nombre, telefono, contrasena) {
+    static async registrarUsuario(email, nombre, telefono, contrasena, rol = 'user') {
         try {
             // Validación básica
             if (!email || !contrasena) throw new Error('Email y contraseña son requeridos');
             
             const [result] = await connection.execute(
-                'INSERT INTO usuarios (email, nombre, telefono, contrasena) VALUES (?, ?, ?, ?)',
-                [email.trim(), nombre?.trim(), telefono?.trim(), contrasena.trim()]
+                'INSERT INTO usuarios (email, nombre, telefono, contrasena, rol) VALUES (?, ?, ?, ?, ?)',
+                [email.trim(), nombre?.trim(), telefono?.trim(), contrasena.trim(), rol]
             );
             return result;
         } catch (error) {
@@ -86,6 +86,19 @@ class Usuario {
         }
     }
 
+    static async actualizarContrasena(id, nuevaContrasena) {
+        try {
+            const [result] = await connection.execute(
+                'UPDATE usuarios SET contrasena = ? WHERE id = ?',
+                [nuevaContrasena, id]
+            );
+            return result;
+        } catch (error) {
+            console.error('Error al actualizar contraseña:', error);
+            throw new Error('Error en la base de datos');
+        }
+    }
+
     // Método para obtener un usuario por id
     static async obtenerUsuarioPorId(id) {
         const [rows] = await connection.execute('SELECT * FROM usuarios WHERE id = ?', [id]);
@@ -93,12 +106,49 @@ class Usuario {
     }
 
 // Método para actualizar un usuario 
-static async actualizarUsuario(id, email, nombre, telefono, contraseña) {
-    const [result] = await connection.execute(
-        'UPDATE usuarios SET email = ?, nombre = ?, telefono = ?, contraseña = ? WHERE id = ?',
-        [email, nombre, telefono, contraseña, id]
-    );
-    return result;
+static async actualizarUsuario(id, email, nombre, telefono, rol) {
+    try {
+        // Preparamos la consulta SQL para actualizar solo los campos que se proporcionan
+        let query = 'UPDATE usuarios SET ';
+        const params = [];
+        const updateFields = [];
+        
+        if (email !== null && email !== undefined) {
+            updateFields.push('email = ?');
+            params.push(email);
+        }
+        
+        if (nombre !== null && nombre !== undefined) {
+            updateFields.push('nombre = ?');
+            params.push(nombre);
+        }
+        
+        if (telefono !== null && telefono !== undefined) {
+            updateFields.push('telefono = ?');
+            params.push(telefono);
+        }
+        
+        if (rol !== null && rol !== undefined) {
+            updateFields.push('rol = ?');
+            params.push(rol);
+        }
+        
+        // Si no hay campos para actualizar, lanzamos un error
+        if (updateFields.length === 0) {
+            throw new Error('No se proporcionaron campos para actualizar');
+        }
+        
+        // Completamos la consulta
+        query += updateFields.join(', ') + ' WHERE id = ?';
+        params.push(id);
+        
+        // Ejecutamos la consulta
+        const [result] = await connection.execute(query, params);
+        return result;
+    } catch (error) {
+        console.error('Error en actualizarUsuario:', error);
+        throw error;
+    }
 }
 
     // Método para eliminar usuario por id

@@ -4,7 +4,6 @@ const mysql = require("mysql2/promise");
 const fetch = require("node-fetch");
 
 // Configuración de la conexión a la base de datos MySQL
-// Configuración de la conexión a la base de datos MySQL
 const connection = mysql.createPool({
     host: "localhost",
     user: "root",
@@ -18,7 +17,6 @@ const URLUSERS = "http://localhost:3001";
 const URLCARS = "http://localhost:3002";
 
 class Compra {
-    
     // Método para registrar una compra
     static async registrarCompra(userId, vehicleId, precioTotal, metodoPago, visitaId) {
         console.log("Registrando compra con los siguientes datos:", { userId, vehicleId, precioTotal, metodoPago, visitaId });
@@ -70,6 +68,35 @@ class Compra {
         }
     }
 
+    static async obtenerRegistrosPorUsuario(userId) {
+        // Asegúrate de que el usuario de conexión tenga acceso a comprasbd y vehiculosbd
+        const [comprasConVehiculos] = await connection.execute(
+          `
+          SELECT 
+            c.id             AS compra_id,
+            c.fecha,
+            c.precio_total,
+            c.metodo_pago,
+            c.estado,
+            v.id             AS vehiculo_id,
+            v.marca,
+            v.modelo,
+            v.año,
+            v.precio,
+            v.kilometraje,
+            v.estado         AS estado_vehiculo
+          FROM comprasbd.compras AS c
+          INNER JOIN vehiculosbd.vehiculos AS v 
+            ON c.vehicle_id = v.id
+          WHERE c.user_id = ?
+          `,
+          [userId]
+        );
+      
+        return comprasConVehiculos;
+      }
+      
+
 
     // Método para obtener las compras de un usuario
     static async obtenerComprasPorUsuario(userId) {
@@ -77,27 +104,31 @@ class Compra {
         return rows;
     }
 
-    static async obtenerCompras(limit) {
-        let query = 'SELECT * FROM compras';
-        if (limit) {
-            query += ` LIMIT ${limit}`;
-        }
-        const [rows] = await connection.execute(query);
+    static async eliminarVisita(userId) {
+        const [rows] = await connection.execute('DELETE FROM visitas WHERE id = ?', [userId]);
         return rows;
     }
 
-    static async obtenerVisitas(limit) {
-        let query = 'SELECT * FROM visitas';
-        if (limit) {
-            query += ` LIMIT ${limit}`;
-        }
-        const [rows] = await connection.execute(query);
+    static async obtenerVisitasPorUsuario(userId) {
+        const [rows] = await connection.execute(
+          `SELECT * FROM comprasbd.visitas WHERE user_id = ?`,
+          [userId]
+        );
         return rows;
-    }
+      }
+      
 
     // Método para obtener una compra por ID
     static async obtenerCompraPorId(purchaseId) {
         const [rows] = await connection.execute('SELECT * FROM compras WHERE id = ?', [purchaseId]);
+        return rows[0];
+    }
+
+    
+
+    // Método para obtener una compra por ID
+    static async obtenerVisitaPorId(visitId) {
+        const [rows] = await connection.execute('SELECT * FROM visitas WHERE id = ?', [visitId]);
         return rows[0];
     }
 
@@ -112,7 +143,7 @@ class Compra {
         if (!purchase) {
             throw new Error("Compra no encontrada");
         }
-       
+        // Aquí podrías agregar lógica para verificar si el vehículo ya está vendido
         const vehicleResponse = await fetch(`${URLCARS}/api/vehiculos/${purchase.vehicle_id}`);
         const vehicleData = await vehicleResponse.json();
         if (vehicleData.estado === "vendido") {
@@ -143,6 +174,18 @@ class Compra {
         return result;
     }
 
+    static async eliminarVisita(visitId) {
+        // Aquí podrías agregar lógica para verificar si la compra existe
+        const visita = await this.obtenerVisitaPorId(visitId);
+        if (!visita) {
+            throw new Error("Compra no encontrada");
+        }
+        // Aquí podrías agregar lógica para verificar si el vehículo ya está vendido
+        
+        const [result] = await connection.execute('DELETE FROM visitas WHERE id = ?', [visitId]);
+        return result;
+    }
+
     // Método para marcar una compra como "venta realizada"
     static async registrarVenta(purchaseId) {
         // Aquí podrías agregar lógica para verificar si la compra existe
@@ -157,34 +200,27 @@ class Compra {
         return result;
     }
 
-    // Método para registrar una visita de un posible comprador a un vehículo
-    static async registrarVisita(userId, vehicleId, asistio) {
-        // validaciones de los datos
-        if (!userId || !vehicleId) {
-            throw new Error("Todos los campos son obligatorios");
-        }
-        // Aquí podrías agregar lógica para verificar si el usuario y el vehículo existen
-        const userResponse = await fetch(`${URLUSERS}/api/usuarios/${userId}`);
-        const userData = await userResponse.json();
-        if (!userData) {
-            throw new Error("Usuario no encontrado");
-        }
-        const vehicleResponse = await fetch(`${URLCARS}/api/vehiculos/${vehicleId}`);
-        const vehicleData = await vehicleResponse.json();
-        if (!vehicleData) {
-            throw new Error("Vehículo no encontrado");
-        }
-        // Aquí podrías agregar lógica para verificar si el vehículo ya está vendido
-        if (vehicleData.estado === "vendido") {
-            throw new Error("El vehículo ya ha sido vendido");
-        }
-        const fecha = new Date();
-        const [result] = await connection.execute(
-            'INSERT INTO visitas (user_id, vehicle_id, fecha, asistio) VALUES (?, ?, ?, ?)',
-            [userId, vehicleId, fecha, asistio]
-        );
-        return result;
-    }
+    // Agrega esto en la clase Compra
+    static async obtenerTodasLasCompras() {
+    const [rows] = await connection.execute('SELECT * FROM compras');
+    return rows;
+}
+
+static async registrarVisita(userId, vehicleId, fecha, asistio) {
+    const [result] = await connection.execute(
+      `INSERT INTO visitas (user_id, vehicle_id, fecha, asistio)
+       VALUES (?, ?, ?, ?)`,
+      [userId, vehicleId, fecha, asistio ? 'si' : 'no']
+    );
+    return result;
+  }
+  
+
+    // En la clase Compra
+static async obtenerTodasLasVisitas() {
+    const [rows] = await connection.execute('SELECT * FROM visitas');
+    return rows;
+}
 
 }
 

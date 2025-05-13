@@ -4,6 +4,23 @@ const express = require("express");
 const router = express.Router();
 const Compra = require("../models/comprasModel"); // Asegúrate de que el modelo esté bien importado
 
+
+router.get('/vehiculos/user/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    
+    try {
+        // Usar el método existente en el modelo Compra
+        const comprasConVehiculos = await Compra.obtenerRegistrosPorUsuario(userId);
+        res.status(200).json(comprasConVehiculos);
+    } catch (error) {
+        console.error('Error al obtener compras con vehículos:', error);
+        res.status(500).json({ 
+            message: "Error al obtener historial de compras",
+            error: error.message
+        });
+    }
+});
+
 // Registrar una compra
 router.post("/", async (req, res) => {
     const { userId, vehicleId, precioTotal, metodoPago, visitaId } = req.body;
@@ -26,6 +43,66 @@ router.post("/", async (req, res) => {
     }
 });
 
+// Obtener todas las compras
+router.get("/all", async (req, res) => {
+    try {
+        const compras = await Compra.obtenerTodasLasCompras();
+        res.status(200).json(compras);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener todas las compras", error: err });
+    }
+});
+
+// Obtener todas las visitas (solo para administradores)
+router.get("/visitas", async (req, res) => {
+    
+
+    try {
+        const visitas = await Compra.obtenerTodasLasVisitas(); // Método que debe implementarse en el modelo
+        res.status(200).json(visitas);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener las visitas", error: err });
+    }
+});
+
+router.delete("/visitas/:visitId", async (req, res) => {
+    const { visitId } = req.params;
+    try {
+        const result = await Compra.eliminarVisita(visitId);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: "Visita eliminada exitosamente" });
+        } else {
+            res.status(404).json({ message: "Visita no encontrada" });
+        }
+    } catch (err) {
+        if (err.message === "Compra no encontrada") {
+            return res.status(404).json({ message: err.message });
+        }
+        if (err.message === "Vehículo ya vendido") {
+            return res.status(400).json({ message: err.message });
+        }
+        res.status(500).json({ message: "Error al eliminar la visita", error: err });
+        
+    }
+});
+
+
+
+// Obtener visitas de un usuario
+router.get('/visitas/user/:userId', async (req, res) => {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId)) return res.status(400).json({ message: 'ID inválido' });
+  
+    try {
+      const visitas = await Compra.obtenerVisitasPorUsuario(userId);
+      res.status(200).json(visitas);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Error al obtener visitas', error: err.message });
+    }
+  });
+  
+
 
 // Obtener las compras de un usuario
 router.get("/user/:userId", async (req, res) => {
@@ -35,16 +112,6 @@ router.get("/user/:userId", async (req, res) => {
         res.status(200).json(compras);
     } catch (err) {
         res.status(500).json({ message: "Error al obtener el historial de compras", error: err });
-    }
-});
-
-// Obtener las compras de un usuario
-router.get("/all", async (req, res) => {
-    try {
-        const compras = await Compra.obtenerCompras();
-        res.status(200).json(compras);
-    } catch (err) {
-        res.status(500).json({ message: "Error al obtener las compras", error: err });
     }
 });
 
@@ -127,33 +194,31 @@ router.post("/venta/:purchaseId", async (req, res) => {
     }
 });
 
-// Registrar una visita de un comprador a un vehículo
-router.post("/visitas", async (req, res) => {
-    const { userId, vehicleId, asistio } = req.body;  // Recibimos el valor de 'asistio'
+router.delete('/visitas/:id', async (req, res) => {
+    const { id } = req.params;
+        try {
+            const result = await Compra.eliminarVisita(id);
+      
+        res.status(200).json({ message: "Visita eliminada exitosamente", result });
+          } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: "Error al registrar la visita", error: err.message });
+          }
     
-    try {
-        // Ya no es necesario hacer validación externa, solo registramos la visita
-        const result = await Compra.registrarVisita(userId, vehicleId, asistio);  // Pasamos 'asistio' aquí
-        res.status(201).json({ message: "Visita registrada exitosamente", result });
-    } catch (err) {
-        if (err.message === "Usuario no encontrado" || err.message === "Vehículo no encontrado") {
-            return res.status(400).json({ message: err.message });
-        }
-        if (err.message === "El vehículo ya ha sido vendido") {
-            return res.status(400).json({ message: err.message });
-        }
-        res.status(500).json({ message: "Error al registrar la visita", error: err });
-    }
 });
 
-router.get("/visitasver", async (req, res) => {
+router.post('/visitas', async (req, res) => {
+    const { userId, vehicleId, asistio, fecha } = req.body;
     try {
-        const visitas = await Compra.obtenerVisitas();
-        res.status(200).json(visitas);
+      const result = await Compra.registrarVisita(userId, vehicleId, fecha, asistio);
+      res.status(201).json({ message: "Visita registrada exitosamente", result });
     } catch (err) {
-        res.status(500).json({ message: "Error al obtener las visitas", error: err });
+      console.error(err);
+      res.status(500).json({ message: "Error al registrar la visita", error: err.message });
     }
-});
+  });
+  
+
 
 
 // Ruta de prueba (para verificar que las rutas están funcionando)

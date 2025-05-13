@@ -5,7 +5,7 @@ const Usuario = require("../models/usuariosModel");  // Solo importa la clase Us
 
 // Registrar un usuario
 router.post("/api/usuarios/register", async (req, res) => {
-    const { email, nombre, telefono, contrasena, } = req.body;
+    const { email, nombre, telefono, contrasena, rol } = req.body;
 
     try {
         // Verificar si el email ya existe
@@ -15,10 +15,11 @@ router.post("/api/usuarios/register", async (req, res) => {
         }
 
         // Registrar usuario sin encriptar la contraseña
-        const result = await Usuario.registrarUsuario(email, nombre, telefono, contrasena);
+        const result = await Usuario.registrarUsuario(email, nombre, telefono, contrasena, rol);
         res.status(201).json({ message: "Usuario registrado exitosamente" });
     } catch (err) {
-        res.status(500).json({ message: "Error al registrar usuario", error: err });
+        console.error("Error al registrar usuario:", err);
+        res.status(500).json({ message: "Error al registrar usuario", error: err.message });
     }
 });
 
@@ -49,6 +50,7 @@ router.post('/api/usuarios/login', async (req, res) => {
 
         return res.status(200).json({
             message: "Login exitoso",
+            id: usuario.id,
             nombre: usuario.nombre,            
             role: usuario.rol || 'user',
             redirect: usuario.rol === 'admin' ? '/admin' : '/perfil'
@@ -57,6 +59,34 @@ router.post('/api/usuarios/login', async (req, res) => {
     } catch (err) {
         console.log('Error en la base de datos:', err);
         return res.status(500).json({ message: "Error en la base de datos", error: err });
+    }
+});
+
+// Cambiar contraseña (ruta específica)
+router.put('/api/usuarios/password-change', async (req, res) => {
+    const { id, nuevaContrasena } = req.body;
+    
+    
+    try {
+        const result = await Usuario.actualizarContrasena(id, nuevaContrasena);
+        
+        if (result.affectedRows > 0) {
+            res.status(200).json({ 
+                success: true,
+                message: "Contraseña actualizada exitosamente" 
+            });
+        } else {
+            res.status(404).json({ 
+                success: false,
+                message: "Usuario no encontrado" 
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error al cambiar contraseña",
+            error: error.message
+        });
     }
 });
 
@@ -77,12 +107,13 @@ router.get("/api/usuarios/:id", async (req, res) => {
 
 // Ruta PUT para actualizar un usuario
 router.put("/api/usuarios/:id", async (req, res) => {
+    console.log("Datos recibidos para actualización:", req.body);
     const { id } = req.params;
-    const { email, nombre, telefono, contrasena } = req.body;
+    const { email, nombre, telefono, rol } = req.body;
 
     try {
-        // Llamamos al método actualizarUsuario del modelo
-        const result = await Usuario.actualizarUsuario(id, email, nombre, telefono, contrasena);
+        // Llamamos al método actualizarUsuario del modelo con los campos correctos
+        const result = await Usuario.actualizarUsuario(id, email, nombre, telefono, rol);
 
         if (result.affectedRows > 0) {
             res.status(200).json({ message: "Datos actualizados exitosamente" });
@@ -90,11 +121,10 @@ router.put("/api/usuarios/:id", async (req, res) => {
             res.status(404).json({ message: "Usuario no encontrado" });
         }
     } catch (err) {
-        console.error("Error en la actualización de datos:", err);  // Depuración del error
+        console.error("Error en la actualización de datos:", err);
         res.status(500).json({ message: "Error al actualizar datos", error: err.message });
     }
 });
-
 // Eliminar cuenta de usuario
 router.delete("/api/usuarios/:id", async (req, res) => {
     const { id } = req.params;
@@ -121,21 +151,8 @@ router.post("/api/usuarios/logout", (req, res) => {
     res.status(200).json({ message: "Sesión cerrada exitosamente" });
 });
 
-// Cambiar contraseña
-router.put("/api/usuarios/password-change", async (req, res) => {
-    const { id, nuevaContrasena } = req.body;
-    try {
-        const hashedPassword = await bcrypt.hash(nuevaContrasena, 10);
-        const result = await Usuario.actualizarUsuario(id, null, null, null, hashedPassword);
-        if (result.affectedRows > 0) {
-            res.status(200).json({ message: "Contraseña cambiada exitosamente" });
-        } else {
-            res.status(404).json({ message: "Usuario no encontrado" });
-        }
-    } catch (err) {
-        res.status(500).json({ message: "Error al cambiar contraseña", error: err });
-    }
-});
+
+
 // Obtener todos los usuarios
 router.get("/api/usuarios", async (req, res) => {
     try {

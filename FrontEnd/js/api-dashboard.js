@@ -102,7 +102,13 @@ class UserManager {
 class VehicleManager {
     static async createVehicle(vehicleData) {
         try {
-            const response = await fetch(`${API_URLS.vehiculos}/vehiculos`, {
+            // Asegurarse de que el usuario esté incluido en los datos
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user && user.id) {
+                vehicleData.user_id = user.id;
+            }
+            
+            const response = await fetch(`${API_URLS.vehiculos}/vehiculos/crear`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -110,6 +116,12 @@ class VehicleManager {
                 },
                 body: JSON.stringify(vehicleData)
             });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al crear vehículo');
+            }
+            
             return await response.json();
         } catch (error) {
             console.error('Error al crear vehículo:', error);
@@ -184,12 +196,93 @@ class VisitManager {
         }
     }
 
-   
+    // Agregar la función getUserVisits
+    static async getUserVisits(userId) {
+        try {
+            const response = await fetch(`${API_URLS.compras}/compras/visitas/user/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error al obtener visitas del usuario:', error);
+            throw error;
+        }
+    }
+}
+
+// Gestión de Compras
+class PurchaseManager {
+    static async createPurchase(purchaseData) {
+        try {
+            const response = await fetch(`${API_URLS.compras}/compras`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(purchaseData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error al crear compra:', error);
+            throw error;
+        }
+    }
+
+    static async updatePurchase(id, purchaseData) {
+        try {
+            const response = await fetch(`${API_URLS.compras}/compras/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(purchaseData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error al actualizar compra:', error);
+            throw error;
+        }
+    }
+
+    static async deletePurchase(id) {
+        try {
+            const response = await fetch(`${API_URLS.compras}/compras/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error al eliminar compra:', error);
+            throw error;
+        }
+    }
+
+    static async completePurchase(id) {
+        try {
+            const response = await fetch(`${API_URLS.compras}/compras/venta/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error al completar compra:', error);
+            throw error;
+        }
+    }
 }
 
 export {
     UserManager,
     VehicleManager,
     VisitManager,
+    PurchaseManager,
     checkAuth
 };

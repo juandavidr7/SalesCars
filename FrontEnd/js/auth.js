@@ -145,6 +145,7 @@ const validatePhone = (phone) => {
 };
 
 // Manejo del formulario de login
+// Primero corrige la función handleLogin 
 async function handleLogin(e) {
     e.preventDefault();
     clearErrors();
@@ -162,23 +163,30 @@ async function handleLogin(e) {
         });
 
         const data = await response.json();
+        
+        console.log('Datos de respuesta:', data);
 
         if (response.ok) {
-            // Guardar token y datos de usuario
+            // Guardar token y datos del usuario
             localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify({
-                name: data.nombre,
-                role: data.role
+            
+            // Asegúrate de que los nombres de campos sean consistentes
+            localStorage.setItem('userData', JSON.stringify({
+                id: data.id,
+                nombre: data.nombre,
+                email: emailInput.value,
+                rol: data.role || data.rol // Manejar ambas posibilidades
             }));
             
+            console.log("Rol del usuario:", data.role || data.rol);
+            
             // Redirigir automáticamente según el rol
-            if (data.role === 'admin') {
+            if ((data.role || data.rol) === 'admin') {
+                console.log("Redirigiendo a admin dashboard...");
                 window.location.href = 'views/admin-dashboard.html';
             } else {
-                console.log("Dato importamte: ", data.role);
+                console.log("Redirigiendo a user dashboard...");
                 window.location.href = 'views/user-dashboard.html';
-                
-                
             }
         } else {
             showError('loginError', data.message || 'Credenciales incorrectas');
@@ -193,39 +201,87 @@ async function handleLogin(e) {
 async function handleRegister(e) {
     e.preventDefault();
     clearErrors();
+    console.log('Iniciando registro...');
 
-    const nombre = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
-    const telefono = document.getElementById('registerPhone').value;
-    const contrasena = document.getElementById('registerPassword').value;
-
+    // Obtener elementos del formulario
+    const nombreElement = document.getElementById('registerName');
+    const emailElement = document.getElementById('registerEmail');
+    const telefonoElement = document.getElementById('registerPhone');
+    const passwordElement = document.getElementById('registerPassword');
+    
+    // Verificar si los elementos existen
+    if (!nombreElement || !emailElement || !passwordElement) {
+        console.error('Elementos del formulario no encontrados:', {
+            nombre: !!nombreElement,
+            email: !!emailElement,
+            telefono: !!telefonoElement,
+            password: !!passwordElement
+        });
+        showError('registerError', 'Error en el formulario. Por favor, recarga la página.');
+        return;
+    }
+    
+    // Obtener valores
+    const nombre = nombreElement.value;
+    const email = emailElement.value;
+    const telefono = telefonoElement ? telefonoElement.value : '';
+    const password = passwordElement.value;
+    
+    console.log('Valores del formulario:', { nombre, email, telefono, password: '***' });
+    
+    // Validaciones básicas
+    if (!validateEmail(email)) {
+        showError('registerError', 'Email inválido');
+        return;
+    }
+    
+    if (!validatePassword(password)) {
+        showError('registerError', 'La contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+    
+    if (telefono && !validatePhone(telefono)) {
+        showError('registerError', 'Teléfono inválido (debe tener 10 dígitos)');
+        return;
+    }
+    
     try {
-        console.log('Registrando usuario...');
+        // Determinar el rol (usuario normal por defecto)
+        const isAdmin = document.getElementById('isAdmin') && document.getElementById('isAdmin').checked;
+        const rol = isAdmin ? 'admin' : 'user';
+        
+        // Crear objeto con los datos del usuario - EXACTAMENTE como en el CURL
+        const userData = { 
+            email: email,
+            nombre: nombre,
+            telefono: telefono,
+            contrasena: password, // Cambiado de password a contrasena
+            rol: rol
+        };
+        
+        console.log('Datos a enviar:', userData);
+        
+        // Enviar solicitud al servidor
         const response = await fetch(`${API_URLS.usuarios}/usuarios/register`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                nombre,
-                email,
-                telefono,
-                contrasena,
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
         });
-
+        
+        console.log('Respuesta del servidor:', response.status);
         const data = await response.json();
-
+        console.log('Datos de respuesta:', data);
+        
         if (response.ok) {
+            showNotification('Usuario registrado exitosamente');
             hideModal(document.getElementById('registerModal'));
             showModal(document.getElementById('loginModal'));
-            clearForms();
         } else {
             showError('registerError', data.message || 'Error al registrar usuario');
         }
     } catch (error) {
         console.error('Error en registro:', error);
-        showError('registerError', 'Error al conectar con el servidor');
+        showError('registerError', 'Error de conexión');
     }
 }
 
@@ -263,7 +319,8 @@ function handleLogout() {
 // Verificar si hay un usuario logueado
 function checkLoggedUser() {
     const userJson = localStorage.getItem('user');
-    if (userJson) {
+    const adminJson = localStorage.getItem('admin');
+    if (userJson || adminJson) {
         try {
             const user = JSON.parse(userJson);
             updateUIForLoggedUser(user);
@@ -273,4 +330,26 @@ function checkLoggedUser() {
             localStorage.removeItem('token');
         }
     }
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'success') {
+    // Crear elemento de notificación si no existe
+    let notification = document.getElementById('notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'notification';
+        notification.className = 'notification';
+        document.body.appendChild(notification);
+    }
+    
+    // Establecer tipo y mensaje
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.display = 'block';
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
 }
