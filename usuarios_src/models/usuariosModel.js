@@ -2,6 +2,7 @@ const mysql = require("mysql2/promise");
 
 // Configuración mejorada de conexión
 const connection = mysql.createPool({
+<<<<<<< HEAD
     host: "localhost",
     user: "root",
     password: "base123456",
@@ -9,6 +10,14 @@ const connection = mysql.createPool({
     port: 3306,
     charset: 'utf8mb4' // Añadido para soportar caracteres especiales
 });
+=======
+    host: 'localhost',
+    user: 'root', // 
+    password: 'base123456', // ← Que coincida con lo que configuraste
+    database: 'concesionario'
+  });
+  
+>>>>>>> 112b6bce976f9a518b6b3f07c221e8524828f383
 
 // Función mejorada para probar conexión
 async function testConnection() {
